@@ -5,6 +5,8 @@ import os
 import glob
 import re
 import json
+import threading
+
 import numpy as np
 import tensorflow as tf
 
@@ -206,6 +208,7 @@ class TFModel(BaseModel):
         self._microbatch = None
         self._zero_grad = None
         self._update_grad = None
+        self._train_lock = threading.Lock()
         self._attrs = []
         self._to_classes = {}
         self._inputs = {}
@@ -241,7 +244,8 @@ class TFModel(BaseModel):
                     self.store_to_attr('is_training', tf.placeholder(tf.bool, name='is_training'))
                     self.store_to_attr('global_step', tf.Variable(0, trainable=False, name='global_step'))
 
-                config = self._build()
+                config = self.build_config()
+                self._build(config)
 
                 self._make_loss(config)
                 self.store_to_attr('loss', tf.losses.get_total_loss())
@@ -249,6 +253,7 @@ class TFModel(BaseModel):
                 microbatch = self.get('microbatch', config)
                 if self.train_step is None:
                     optimizer = self._make_optimizer(config)
+
                     update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
                     with tf.control_dependencies(update_ops):
                         if microbatch:
@@ -538,7 +543,7 @@ class TFModel(BaseModel):
     def _make_optimizer(self, config):
         optimizer_name, optimizer_args = self._unpack_fn_from_config('optimizer', config)
 
-        if callable(optimizer_name):
+        if optimizer_name is None or callable(optimizer_name):
             pass
         elif isinstance(optimizer_name, str) and hasattr(tf.train, optimizer_name):
             optimizer_name = getattr(tf.train, optimizer_name)
@@ -551,7 +556,10 @@ class TFModel(BaseModel):
         if decay_name is not None:
             optimizer_args['learning_rate'] = decay_name(**decay_args, global_step=self.global_step)
 
-        optimizer = optimizer_name(**optimizer_args)
+        if optimizer_name:
+            optimizer = optimizer_name(**optimizer_args)
+        else:
+            optimizer = None
 
         return optimizer
 
@@ -603,12 +611,18 @@ class TFModel(BaseModel):
                 shape = (shape,)
             if shape:
                 kwargs['shape'] = shape
+        elif isinstance(input_name, str):
+            try:
+                tensor = self.graph.get_tensor_by_name(input_name)
+            except KeyError:
+                config = {}
+            else:
+                shape = tensor.get_shape().as_list()[1:]
+                config = dict(dtype=tensor.dtype, shape=shape, name=tensor.name, data_format='channels_last')
         else:
-            tensor = self.graph.get_tensor_by_name(input_name)
-            shape = tensor.get_shape().as_list()[1:]
-            config = dict(dtype=tensor.dtype, shape=shape, name=tensor.name, data_format='channels_last')
-        config = {**config, **kwargs}
+            config = {}
 
+        config = {**config, **kwargs}
         return config
 
 
@@ -815,7 +829,7 @@ class TFModel(BaseModel):
 
         return output
 
-    def train(self, fetches=None, feed_dict=None):   # pylint: disable=arguments-differ
+    def train(self, fetches=None, feed_dict=None, use_lock=False):   # pylint: disable=arguments-differ
         """ Train the model with the data provided
 
         Parameters
@@ -824,6 +838,8 @@ class TFModel(BaseModel):
             a sequence of `tf.Operation` and/or `tf.Tensor` to calculate
         feed_dict : dict
             input data, where key is a placeholder name and value is a numpy value
+        use_lock : bool
+            if True, the whole train step is locked, thus allowing for multithreading.
 
         Returns
         -------
@@ -851,7 +867,23 @@ class TFModel(BaseModel):
             else:
                 _, output = self.session.run([self.train_step, _fetches], feed_dict=_feed_dict)
 
-        return self._fill_output(output, _fetches)
+            if use_lock:
+                self._train_lock.acquire()
+
+            _all_fetches = []
+            if self.train_step:
+                _all_fetches += [self.train_step]
+            if _fetches:
+                _all_fetches += [_fetches]
+            if len(_all_fetches) > 0:
+                _, output = self.session.run(_all_fetches, feed_dict=_feed_dict)
+            else:
+                output = None
+
+            if use_lock:
+                self._train_lock.release()
+
+            return self._fill_output(output, _fetches)
 
     def predict(self, fetches=None, feed_dict=None):      # pylint: disable=arguments-differ
         """ Get predictions on the data provided
@@ -1253,24 +1285,21 @@ class TFModel(BaseModel):
 
         config = self.default_config()
 
-        with tf.variable_scope('inputs'):
-            self._make_inputs(names, self.config)
-
         for k in self.config:
             self.put(k, self.config[k], config)
 
-        inputs = self.get('input_block/inputs', config)
-        config['common'] = {**config['common'], **self.get('common', self.config, {})}
-        if isinstance(inputs, str):
-            config['common']['data_format'] = self.data_format(inputs)
-        config['input_block'] = {**config['input_block'], **self.get('input_block', self.config, {})}
+        if 'inputs' in self.config:
+            with tf.variable_scope('inputs'):
+                self._make_inputs(names, self.config)
+            inputs = self.get('input_block/inputs', config)
 
-        if isinstance(inputs, str):
-            config['input_block']['inputs'] = self.inputs[inputs]
-        elif isinstance(inputs, list):
-            config['input_block']['inputs'] = [self.inputs[name] for name in inputs]
-        else:
-            raise ValueError('input_block/inputs should be specified')
+            if isinstance(inputs, str):
+                config['common']['data_format'] = self.data_format(inputs)
+                config['input_block']['inputs'] = self.inputs[inputs]
+            elif isinstance(inputs, list):
+                config['input_block']['inputs'] = [self.inputs[name] for name in inputs]
+            else:
+                raise ValueError('input_block/inputs should be specified with a name or a list of names.')
 
         config['body'] = {**config['body'], **self.get('body', self.config, {})}
         config['head'] = {**config['head'], **self.get('head', self.config, {})}
@@ -1278,9 +1307,7 @@ class TFModel(BaseModel):
         return config
 
 
-    def _build(self):
-        config = self.build_config()
-
+    def _build(self, config=None):
         defaults = {'is_training': self.is_training, **config['common']}
         config['input_block'] = {**defaults, **config['input_block']}
         config['body'] = {**defaults, **config['body']}
@@ -1291,8 +1318,6 @@ class TFModel(BaseModel):
         x = self.body(inputs=x, **config['body'])
         output = self.head(inputs=x, **config['head'])
         self.output(output, **config['output'])
-
-        return config
 
     @classmethod
     def se_block(cls, inputs, ratio, name='se', **kwargs):
