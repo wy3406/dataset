@@ -203,6 +203,9 @@ class TFModel(BaseModel):
         self.global_step = None
         self.loss = None
         self.train_step = None
+        self._microbatch = None
+        self._zero_grad = None
+        self._update_grad = None
         self._attrs = []
         self._to_classes = {}
         self._inputs = {}
@@ -243,12 +246,19 @@ class TFModel(BaseModel):
                 self._make_loss(config)
                 self.store_to_attr('loss', tf.losses.get_total_loss())
 
+                microbatch = self.get('microbatch', config)
                 if self.train_step is None:
                     optimizer = self._make_optimizer(config)
-
                     update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
                     with tf.control_dependencies(update_ops):
-                        self.store_to_attr('train_step', optimizer.minimize(self.loss, global_step=self.global_step))
+                        if microbatch:
+                            self._microbatch = microbatch
+                            train_step, update_grad, zero_grad = self.add_microbatching()
+                            self.store_to_attr('_update_grad', update_grad)
+                            self.store_to_attr('_zero_grad', zero_grad)
+                        else:
+                            train_step = optimizer.minimize(self.loss, global_step=self.global_step)
+                        self.store_to_attr('train_step', train_step)
                 else:
                     self.store_to_attr('train_step', self.train_step)
 
@@ -545,10 +555,15 @@ class TFModel(BaseModel):
 
         return optimizer
 
-    def get_number_of_trainable_vars(self):
-        """ Return the number of trainable variable in the model graph """
+    def get_trainable_vars(self):
+        """ Return all trainable variables in the model graph """
         with self.graph:
-            arr = np.asarray([np.prod(self.get_shape(v)) for v in tf.trainable_variables()])
+            vars = tf.trainable_variables()
+        return vars
+
+    def get_number_of_trainable_vars(self):
+        """ Return the number of trainable variables in the model graph """
+        arr = np.asarray([np.prod(self.get_shape(v)) for v in self.get_trainable_variables()])
         return np.sum(arr)
 
     def get_tensor_config(self, tensor, **kwargs):
@@ -824,7 +839,17 @@ class TFModel(BaseModel):
                 _fetches = tuple()
             else:
                 _fetches = self._fill_fetches(fetches, default=None)
-            _, output = self.session.run([self.train_step, _fetches], feed_dict=_feed_dict)
+
+            if self.microbatch:
+                n_splits = np.ceil(len(batch[0]) / 1) #micro_batch_size)
+                splitted = [np.array_split(res, n_splits) for res in batch]
+
+                self.session.run(self._zero_grad)
+                for x, y in zip(*splitted):
+                    session.run(accum_op, feed_dict={x_ph: x, y_ph: y})
+                self.session.run(self.train_step)
+            else:
+                _, output = self.session.run([self.train_step, _fetches], feed_dict=_feed_dict)
 
         return self._fill_output(output, _fetches)
 
@@ -1191,6 +1216,7 @@ class TFModel(BaseModel):
         config['output'] = {}
         config['loss'] = 'ce'
         config['optimizer'] = 'Adam'
+        config['microbatch'] = False
         return config
 
     @classmethod
@@ -1297,3 +1323,23 @@ class TFModel(BaseModel):
             scale = tf.reshape(x, shape)
             x = inputs * scale
         return x
+
+    def add_microbatching(self):
+        """ Add ops for microbatching """
+        train_vars = self.get_trainable_variables()
+        with tf.variable_scope('microbatch'):
+            microbatch_size = tf.cast(tf.shape(self.targets)[0], tf.float32)
+            grad_acc_vars = [tf.Variable(tf.zeros_like(var.initialized_value()), trainable=False) for var in train_vars]
+            batch_size_var = tf.Variable(tf.zeros(shape=(), dtype=tf.float32), trainable=False)
+
+            zero_grad_ops = [var.assign(tf.zeros_like(var)) for var in grad_acc_vars]
+            zero_batch_size_op = batch_size_var.assign(tf.zeros(shape=(), dtype=tf.float32))
+            zero_op = tf.group(zero_grad_ops, zero_batch_size_op, name='zero_grad')
+
+            grad = opt.compute_gradients(self.loss, train_vars)
+            update_grad_ops = [grad_acc_vars[i].assign_add(g) for i, (g, _) in enumerate(grad)]
+            update_batch_size_op = batch_size_var.assign_add(microbatch_size)
+            update_op = tf.group(update_grad_ops, update_batch_size_op, name='update_grad')
+
+            train_op = opt.apply_gradients([(grad_acc_vars[i] / batch_size_var, v) for i, (_, v) in enumerate(grad)])
+        return train_op, update_op, zero_op
