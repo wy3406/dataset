@@ -1,68 +1,31 @@
 """ Contains convolution layers """
-# pylint:disable=too-many-statements
-import logging
+import numpy as np
 import tensorflow as tf
 
-from .core import mip, flatten
-from .conv import conv1d_transpose, separable_conv
-from .pooling import max_pooling, average_pooling, global_max_pooling, global_average_pooling, fractional_max_pooling
+from .resize import resize_bilinear_additive, resize_bilinear, resize_nn, subpixel_conv
+from .block import _conv_block, _update_layers
 
 
-ND_LAYERS = {
-    'activation': None,
-    'dense': tf.layers.dense,
-    'conv': [tf.layers.conv1d, tf.layers.conv2d, tf.layers.conv3d],
-    'transposed_conv': [conv1d_transpose, tf.layers.conv2d_transpose, tf.layers.conv3d_transpose],
-    'separable_conv':separable_conv,
-    'max_pooling': max_pooling,
-    'average_pooling': average_pooling,
-    'fractional_max_pooling': fractional_max_pooling,
-    'global_max_pooling': global_max_pooling,
-    'global_average_pooling': global_average_pooling,
-    'batch_norm': tf.layers.batch_normalization,
-    'dropout': tf.layers.dropout,
-    'mip': mip
+_NEW_LAYERS = {
+    'A': 'residual_bilinear_additive',
+    'b': 'resize_bilinear',
+    'B': 'resize_bilinear_additive',
+    'N': 'resize_nn',
+    'X': 'subpixel_conv'
 }
 
-C_LAYERS = {
-    'a': 'activation',
-    'f': 'dense',
-    'c': 'conv',
-    't': 'transposed_conv',
-    's': 'separable_conv',
-    'p': 'max_pooling',
-    'v': 'average_pooling',
-    'r': 'fractional_max_pooling',
-    'P': 'global_max_pooling',
-    'V': 'global_average_pooling',
-    'n': 'batch_norm',
-    'd': 'dropout',
-    'm': 'mip'
+_NEW_FUNCS = {
+    'residual_bilinear_additive': None,
+    'resize_bilinear': resize_bilinear,
+    'resize_bilinear_additive': resize_bilinear_additive,
+    'resize_nn': resize_nn,
+    'subpixel_conv': subpixel_conv
 }
 
-_LAYERS_KEYS = str(list(C_LAYERS.keys()))
-_GROUP_KEYS = (
-    _LAYERS_KEYS
-    .replace('t', 'c')
-    .replace('s', 'c')
-    .replace('v', 'p')
-)
-C_GROUPS = dict(zip(_LAYERS_KEYS, _GROUP_KEYS))
+_NEW_GROUPS = {'A': 'b', 'B': 'b', 'N': 'b', 'X': 'b'}
 
-def _get_layer_fn(fn, dim):
-    f = ND_LAYERS[fn]
-    return f if callable(f) or f is None else f[dim-1]
+_update_layers(_NEW_LAYERS, _NEW_FUNCS, _NEW_GROUPS)
 
-def _unpack_args(args, layer_no, layers_max):
-    new_args = {}
-    for arg in args:
-        if isinstance(args[arg], list) and layers_max > 1:
-            arg_value = args[arg][layer_no]
-        else:
-            arg_value = args[arg]
-        new_args.update({arg: arg_value})
-
-    return new_args
 
 def conv_block(inputs, layout='', filters=0, kernel_size=3, name=None,
                strides=1, padding='same', data_format='channels_last', dilation_rate=1, depth_multiplier=1,
@@ -74,30 +37,41 @@ def conv_block(inputs, layout='', filters=0, kernel_size=3, name=None,
     ----------
     inputs : tf.Tensor
         input tensor
-    filters : int
-        number of filters in the ouput tensor
-    kernel_size : int
-        kernel size
     layout : str
-        a sequence of layers:
+        a sequence of operations:
 
         - c - convolution
         - t - transposed convolution
-        - s - separable convolution
+        - C - separable convolution
+        - T - separable transposed convolution
         - f - dense (fully connected)
         - n - batch normalization
         - a - activation
-        - p - max pooling
+        - p - pooling (default is max-pooling)
         - v - average pooling
-        - r - fractional max pooling
-        - P - global max pooling
+        - P - global pooling (default is max-pooling)
         - V - global average pooling
         - d - dropout
+        - D - alpha dropout
         - m - maximum intensity projection (:func:`.layers.mip`)
+        - b - resize (bilinear)
+        - B - resize (bilinear additive)
+        - N - resize (nearest neighbors)
+        - X - subpixel convolution
+        - R - start residual connection
+        - A - start residual connection with bilinear additive upsampling
+        - `+` - end residual connection with summation
+        - `.` - end residual connection with concatenation
 
         Default is ''.
+    filters : int
+        the number of filters in the ouput tensor
+    kernel_size : int
+        kernel size
     name : str
         name of the layer that will be used as a scope.
+    units : int
+        the number of units in the dense layer
     strides : int
         Default is 1.
     padding : str
@@ -112,10 +86,20 @@ def conv_block(inputs, layout='', filters=0, kernel_size=3, name=None,
         Default is 2.
     pool_strides : int
         Default is 2.
+    pool_op : str
+        pooling operation ('max', 'mean', 'frac')
     dropout_rate : float
         Default is 0.
     is_training : bool or tf.Tensor
         Default is True.
+    reuse : bool
+        whether to user layer variables if exist
+    pool_op : str
+        pooling operation ('max', 'mean', 'frac-max', 'frac-mean')
+    global_pool_op : str
+        global pooling operation ('max', 'mean')
+    factor : int or tuple of int
+        upsampling factor
 
     dense : dict
         parameters for dense layers, like initializers, regularalizers, etc
@@ -127,12 +111,18 @@ def conv_block(inputs, layout='', filters=0, kernel_size=3, name=None,
         parameters for batch normalization layers, like momentum, intiializers, etc
         If None or inculdes parameters 'off' or 'disable' set to True or 1,
         the layer will be excluded whatsoever.
-    max_pooling : dict
-        parameters for max_pooling layers, like initializers, regularalizers, etc
+    pooling : dict
+        parameters for pooling layers, like initializers, regularalizers, etc
     dropout : dict or None
         parameters for dropout layers, like noise_shape, etc
         If None or inculdes parameters 'off' or 'disable' set to True or 1,
         the layer will be excluded whatsoever.
+    subpixel_conv : dict or None
+        parameters for subpixel convolution (layout, activation, etc)
+    resize_bilinear : dict or None
+        parameters for bilinear resize
+    resize_bilinear_additive : dict or None
+        parameters for bilinear additive resize (layout, activation, etc)
 
     Returns
     -------
@@ -143,15 +133,18 @@ def conv_block(inputs, layout='', filters=0, kernel_size=3, name=None,
     When ``layout`` includes several layers of the same type, each one can have its own parameters,
     if corresponding args are passed as lists (not tuples).
 
+    Spaces may be used to improve readability.
+
+
     Examples
     --------
-    A simple 2d block: 3x3 conv, batch norm, relu, 2x2 max-pooling with stride 2::
+    A simple block: 3x3 conv, batch norm, relu, 2x2 max-pooling with stride 2::
 
-        x = conv_block(2, x, 32, 3, layout='cnap')
+        x = conv_block(x, 'cnap', filters=32, kernel_size=3)
 
     A canonical bottleneck block (1x1, 3x3, 1x1 conv with relu in-between)::
 
-        x = conv_block(2, x, [64, 64, 256], [1, 3, 1], layout='cacac')
+        x = conv_block(x, 'nac nac nac', [64, 64, 256], [1, 3, 1])
 
     A complex Nd block:
 
@@ -166,108 +159,69 @@ def conv_block(inputs, layout='', filters=0, kernel_size=3, name=None,
 
     ::
 
-        x = conv_block(x, [32, 32, 64], [5, 3, 3], layout='cacacand', strides=[1, 1, 2], dropout_rate=.15)
+        x = conv_block(x, 'ca ca ca nd', [32, 32, 64], [5, 3, 3], strides=[1, 1, 2], dropout_rate=.15)
+
+    A residual block::
+
+        x = conv_block(x, 'R nac nac +', [16, 16, 64], [1, 3, 1])
+
     """
-    layout = layout or ''
-    layout = layout.replace(' ', '')
-    if len(layout) == 0:
-        logging.warning('conv_block: layout is empty, so there is nothing to do, just returning inputs.')
+    tensor = _conv_block(inputs, layout, filters, kernel_size, name,
+                         strides, padding, data_format, dilation_rate, depth_multiplier,
+                         activation, pool_size, pool_strides, dropout_rate, is_training,
+                         **kwargs)
+    return tensor
+
+
+def upsample(inputs, factor, layout='b', name='upsample', **kwargs):
+    """ Upsample inputs with a given factor
+
+    Parameters
+    ----------
+    inputs : tf.Tensor
+        a tensor to resize
+    factor : int
+        an upsamping scale
+    layout : str
+        resizing technique, a sequence of:
+
+        - A - use residual connection with bilinear additive upsampling
+        - b - bilinear resize
+        - B - bilinear additive upsampling
+        - N - nearest neighbor resize
+        - t - transposed convolution
+        - T - separable transposed convolution
+        - X - subpixel convolution
+
+        all other :func:`.conv_block` layers are also allowed.
+
+    Returns
+    -------
+    tf.Tensor
+
+    Examples
+    --------
+    A simple bilinear upsampling::
+
+        x = upsample(inputs, factor=2, layout='b')
+
+    Upsampling with non-linear normalized transposed convolution::
+
+        x = upsample(inputs, factor=2, layout='nat', kernel_size=3)
+
+    Subpixel convolution with a residual bilinear additive connection::
+
+        x = upsample(inputs, factor=2, layout='AX+')
+    """
+    if np.all(factor == 1):
         return inputs
 
-    dim = inputs.shape.ndims - 2
-    if not isinstance(dim, int) or dim < 1 or dim > 3:
-        raise ValueError("Number of dimensions of the inputs tensor should be 1, 2 or 3, but given %d" % dim)
+    if 't' in layout or 'T' in layout:
+        if 'kernel_size' not in kwargs:
+            kwargs['kernel_size'] = factor
+        if 'strides' not in kwargs:
+            kwargs['strides'] = factor
 
-    context = None
-    if name is not None:
-        context = tf.variable_scope(name)
-        context.__enter__()
+    x = conv_block(inputs, layout, name=name, factor=factor, **kwargs)
 
-    layout_dict = {}
-    for layer in layout:
-        if C_GROUPS[layer] not in layout_dict:
-            layout_dict[C_GROUPS[layer]] = [-1, 0]
-        layout_dict[C_GROUPS[layer]][1] += 1
-
-    tensor = inputs
-    for i, layer in enumerate(layout):
-
-        layout_dict[C_GROUPS[layer]][0] += 1
-        layer_name = C_LAYERS[layer]
-        layer_fn = _get_layer_fn(layer_name, dim)
-
-        if layer == 'a':
-            args = dict(activation=activation)
-            layer_fn = _unpack_args(args, *layout_dict[C_GROUPS[layer]])['activation']
-            if layer_fn is not None:
-                tensor = layer_fn(tensor)
-        else:
-            layer_args = kwargs.get(layer_name, {})
-            skip_layer = layer_args is None or layer_args is False or \
-                         isinstance(layer_args, dict) and 'disable' in layer_args and layer_args.pop('disable')
-
-            if skip_layer:
-                pass
-            elif layer == 'f':
-                if tensor.shape.ndims > 2:
-                    tensor = flatten(tensor)
-                units = kwargs.get('units')
-                if units is None:
-                    raise ValueError('units cannot be None if layout includes dense layers')
-                args = dict(units=units)
-
-            elif layer == 'c':
-                args = dict(filters=filters, kernel_size=kernel_size, strides=strides, padding=padding,
-                            data_format=data_format, dilation_rate=dilation_rate)
-                if filters is None or filters == 0:
-                    raise ValueError('filters cannot be None or 0 if layout includes convolutional layers')
-
-            elif layer == 's':
-                args = dict(filters=filters, kernel_size=kernel_size, strides=strides, padding=padding,
-                            data_format=data_format, dilation_rate=dilation_rate, depth_multiplier=depth_multiplier)
-                if filters is None or filters == 0:
-                    raise ValueError('filters cannot be None or 0 if layout includes convolutional layers')
-
-            elif layer == 't':
-                args = dict(filters=filters, kernel_size=kernel_size, strides=strides, padding=padding,
-                            data_format=data_format)
-                if filters is None or filters == 0:
-                    raise ValueError('filters cannot be None or 0 if layout includes convolutional layers')
-
-            elif layer == 'n':
-                axis = -1 if data_format == 'channels_last' else 1
-                args = dict(fused=True, axis=axis, training=is_training)
-
-            elif layer == 'r':
-                args = dict(pooling_ratio=kwargs.get('pooling_ratio', 1.4142),
-                            pseudo_random=kwargs.get('pseudo_random', False),
-                            overlapping=kwargs.get('overlapping', False),
-                            data_format=data_format)
-
-            elif C_GROUPS[layer] == 'p':
-                args = dict(pool_size=pool_size, strides=pool_strides, padding=padding,
-                            data_format=data_format)
-
-            elif layer == 'd':
-                if dropout_rate:
-                    args = dict(rate=dropout_rate, training=is_training)
-                else:
-                    skip_layer = True
-
-            elif layer in ['P', 'V']:
-                args = dict(data_format=data_format)
-
-            elif layer == 'm':
-                args = dict(data_format=data_format)
-
-            if not skip_layer:
-                args = {**args, **layer_args}
-                args = _unpack_args(args, *layout_dict[C_GROUPS[layer]])
-
-                with tf.variable_scope('layer-%d' % i):
-                    tensor = layer_fn(inputs=tensor, **args)
-
-    if context is not None:
-        context.__exit__(None, None, None)
-
-    return tensor
+    return x

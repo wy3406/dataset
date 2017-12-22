@@ -9,8 +9,9 @@ class _DummyBatch:
 
 class NamedExpression:
     """ Base class for a named expression """
-    def __init__(self, name):
+    def __init__(self, name, copy=False):
         self.name = name
+        self.copy = copy
 
     def get(self, batch=None, pipeline=None, model=None):
         """ Return a value of a named expression """
@@ -62,19 +63,45 @@ class NamedExpression:
         self.get(*args, **kwargs).update(value)
 
 
+def eval_expr(expr, batch, pipeline=None, model=None):
+    """ Evaluate a named expression recursively """
+    args = dict(batch=batch, pipeline=pipeline, model=model)
+    if isinstance(expr, NamedExpression):
+        expr = expr.get(**args)
+    elif isinstance(expr, (list, tuple)):
+        _expr = []
+        for val in expr:
+            _expr.append(eval_expr(val, **args))
+        expr = type(expr)(_expr)
+    elif isinstance(expr, dict):
+        _expr = type(expr)()
+        for key, val in expr.items():
+            key = eval_expr(key, **args)
+            val = eval_expr(val, **args)
+            _expr.update({key: val})
+        expr = _expr
+    return expr
+
+
 class B(NamedExpression):
     """ Batch component name """
+    def __init__(self, name=None, copy=True):
+        super().__init__(name, copy)
+
     def get(self, batch=None, pipeline=None, model=None):
         """ Return a value of a batch component """
         name = super().get(batch=batch, pipeline=pipeline, model=model)
         if isinstance(batch, _DummyBatch):
             raise ValueError("Batch expressions are not allowed in static models B(%s)" % name)
+        if name is None:
+            return batch.deepcopy() if self.copy else batch
         return getattr(batch, name)
 
     def assign(self, value, batch=None, pipeline=None, model=None):
         """ Assign a value to a batch component """
         name = super().get(batch=batch, pipeline=pipeline, model=model)
-        setattr(batch, name, value)
+        if name is not None:
+            setattr(batch, name, value)
 
 
 class C(NamedExpression):
@@ -100,6 +127,11 @@ class C(NamedExpression):
 
 class F(NamedExpression):
     """ A function, method or any other callable """
+    def __init__(self, name=None, *args, **kwargs):
+        super().__init__(name)
+        self.args = args
+        self.kwargs = kwargs
+
     def get(self, batch=None, pipeline=None, model=None):
         """ Return a value from a callable """
         name = super().get(batch=batch, pipeline=pipeline, model=model)
@@ -111,7 +143,9 @@ class F(NamedExpression):
             args += [batch]
         if model is not None:
             args += [model]
-        return name(*args)
+        fargs = eval_expr(self.args, batch=batch, pipeline=pipeline, model=model)
+        fkwargs = eval_expr(self.kwargs, batch=batch, pipeline=pipeline, model=model)
+        return name(*args, *fargs, **fkwargs)
 
     def assign(self, *args, **kwargs):
         """ Assign a value by calling a callable """
@@ -132,22 +166,3 @@ class V(NamedExpression):
         name = super().get(batch=batch, pipeline=pipeline, model=model)
         pipeline = batch.pipeline if batch is not None else pipeline
         pipeline.set_variable(name, value)
-
-
-def eval_expr(expr, batch, model=None):
-    """ Evaluate a named expression recursively """
-    if isinstance(expr, NamedExpression):
-        expr = expr.get(batch=batch, model=model)
-    elif isinstance(expr, (list, tuple)):
-        _expr = []
-        for val in expr:
-            _expr.append(eval_expr(val, batch=batch, model=model))
-        expr = type(expr)(_expr)
-    elif isinstance(expr, dict):
-        _expr = type(expr)()
-        for key, val in expr.items():
-            key = eval_expr(key, batch=batch, model=model)
-            val = eval_expr(val, batch=batch, model=model)
-            _expr.update({key: val})
-        expr = _expr
-    return expr

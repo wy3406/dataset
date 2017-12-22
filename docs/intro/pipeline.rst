@@ -1,15 +1,14 @@
+========
 Pipeline
 ========
 
 
 Introduction
-------------
+============
 
 Quite often you can't just use the data itself, as it needs some specific preprocessing beforehand. And not too rarely you end up with several processing workflows which you have to use simultaneously. That is the situation when pipelines might come in handy.
 
-Firstly, you create a batch class with all necessary actions.
-
-.. code-block:: python
+Firstly, you create a batch class with all necessary actions::
 
    class ClientTransactions(Batch):
        ...
@@ -24,37 +23,29 @@ Firstly, you create a batch class with all necessary actions.
            return self
 
        @action
-       def yet_other_action(self):
+       def yet_another_action(self):
            ...
            return self
 
-Secondly, you create a dataset (`client_index` is an instance of :ref:`DatasetIndex`):
-
-.. code-block:: python
+Secondly, you create a dataset (`client_index` is an instance of :ref:`DatasetIndex`)::
 
    ct_ds = Dataset(client_index, batch_class=ClientTranasactions)
 
-And now you can define a workflow pipeline:
-
-.. code-block:: python
+And now you can define a workflow pipeline::
 
    trans_pipeline = (ct_ds.pipeline()
                        .some_action()
                        .other_action(param=2)
-                       .yet_other_action())
+                       .yet_another_action())
 
 And nothing happens! Because all the actions are lazy.
-Let's run them.
-
-.. code-block:: python
+Let's run them.::
 
    trans_pipeline.run(BATCH_SIZE, shuffle=False, n_epochs=1)
 
 Now the dataset is split into batches and then all the actions are executed for each batch independently.
 
-In the very same way you can define an augmentation workflow:
-
-.. code-block:: python
+In the very same way you can define an augmentation workflow::
 
    augm_wf = (image_dataset.pipeline()
                .load('/some/path')
@@ -64,20 +55,18 @@ In the very same way you can define an augmentation workflow:
                .resize(shape=(256, 256))
    )
 
-And again, no action is executed until its result is needed.
-
-.. code-block:: python
+And again, no action is executed until its result is needed.::
 
    NUM_ITERS = 1000
    for i in range(NUM_ITERS):
        image_batch = augm_wf.next_batch(BATCH_SIZE, shuffle=True, n_epochs=None)
        # only now the actions are fired and data is changed with the workflow defined earlier
 
+
 Algebra of pipelines
---------------------
+====================
 
 There are two ways to define a pipeline:
-
 
 * a chain of actions
 * a pipeline algebra
@@ -102,28 +91,27 @@ Execute the pipeline with the given probability.
 `p.random_rotate(angle=(-30, 30)) @ 0.5`
 
 `>>` and `<<`
-^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^
 Link a pipeline to a dataset.
 `dataset >> pipeline` or `pipeline << dataset`
 
 
-The complete example:
-
-.. code-block:: python3
+The complete example::
 
    from dataset import Pipeline
 
    with Pipeline() as p:
-       preprocessing_pipeline = p.load('/some/path') +
-                                p.resize(shape=(256, 256)) +
-                                p.random_rotate(angle=(-30, 30)) @ .8 +
-                                p.random_transform() * 3 +
-                                p.random_crop(shape=(128, 128))
+       preprocessing_pipeline = p.load('/some/path')
+                                + p.resize(shape=(256, 256))
+                                + p.random_rotate(angle=(-30, 30)) @ .8
+                                + p.random_transform() * 3
+                                + p.random_crop(shape=(128, 128))
 
    images_prepocessing = preprocessing_pipeline << images_dataset
 
+
 Creating pipelines
-------------------
+==================
 
 Pipelines can be created from scratch or from a dataset.
 
@@ -138,20 +126,15 @@ A template pipeline
                    .some_action()
                    .another_action()
 
-Or through a context manager with pipeline algebra:
-
-.. code-block:: python
+Or through a context manager with pipeline algebra::
 
    from dataset import Pipeline
 
    with Pipeline() as p:
-       my_pipeline = p.some_action() +
-                     p.another_action()
+       my_pipeline = p.some_action() + p.another_action()
 
 However, you cannot execute this pipeline as it doesn't linked to any dataset.
-On the other hand, such pipelines might be applied to different datasets:
-
-.. code-block:: python
+On the other hand, such pipelines might be applied to different datasets::
 
    cifar10_pipeline = template_preprocessing_pipeline << cifar10_dataset
    mnist_pipeline = template_preprocessing_pipeline << mnist_dataset
@@ -165,9 +148,7 @@ A dataset pipeline
                    .some_action()
                    .another_action()
 
-Or a shorter version:
-
-.. code-block:: python
+Or a shorter version::
 
    my_pipeline = my_dataset.p
                    .some_action()
@@ -175,8 +156,9 @@ Or a shorter version:
 
 Every call to `dataset.pipeline()` or `dataset.p` creates a new pipeline.
 
+
 Running pipelines
------------------
+=================
 
 There are 4 ways to execute a pipeline.
 
@@ -231,8 +213,9 @@ Lazy run
 
 You can add `run` with `lazy=True` as the last action in the pipeline and then call `run()` or `next_batch()` without arguments at all.
 
+
 Pipeline variables
-------------------
+==================
 
 Sometimes batches can be processed in a "do and forget" manner: when you take a batch, make some data transformations and then switch to another batch.
 However, not infrequently you might need to remember some parameters or intermediate results (e.g. a value of loss function or accuracy on every batch
@@ -267,9 +250,7 @@ Updating a variable
 
 Each batch instance have a pointer to the pipeline it was created in (or `None` if the batch was created manually).
 
-So getting an access to a variable is easy:
-
-.. code-block:: python
+So getting an access to a variable is easy::
 
     class MyBatch(Batch):
         ...
@@ -279,16 +260,14 @@ So getting an access to a variable is easy:
             ...
 
 If a variable does not exist, it might be created and initialized, if `create` parameter is set to `True`.
-For a flexible initialization `default`\ , `init` and `init_on_each_run` might also be passed to `get_variable()`.
+For a flexible initialization `default`, `init` and `init_on_each_run` might also be passed to `get_variable()`.
 
 
 .. note:: An explicit variable initialization in a pipeline is a preferred way to create variables.
 
 If `create` is `False` (which is by default), then `get_variable` will raise a `KeyError` if a variable does not exist.
 
-To change a variable value just call `set_variable` within an action:
-
-.. code-block:: python
+To change a variable value just call `set_variable` within an action::
 
     class MyBatch(Batch):
         ...
@@ -298,17 +277,16 @@ To change a variable value just call `set_variable` within an action:
             self.pipeline.set_variable("variable_name", new_value)
             ...
 
-Or add `update_variable` to the pipeline:
-
-.. code-block:: python
+Or add `update_variable` to the pipeline::
 
     my_pipeline
         ...
         .update_variable("current_batch_labels", F(MyBatch.get_labels))
         .update_variable("all_labels", V('current_batch_labels'), mode='append')
 
-The first parameter specifies a variable name, and it can be a string or a named expression, returning a string.
-The second parameter is an updating value and it can be a value of any type or a named expression:
+The first parameter specifies a variable name, and it can be a string or :doc:`a named expression <named_expr>`,
+returning a string.
+The second parameter is an updating value and it can be a value of any type or :doc:`a named expression <named_expr>`:
 
 * B('name') - a batch class attribute or component name
 * V('name') - a pipeline variable name
@@ -339,9 +317,7 @@ Variables as locks
 
 If you use multi-threading :doc:`prefetching <prefetch>` or :doc:`in-batch parallelism <parallel>`,
 than you might require synchronization when accessing some shared resource.
-And pipeline variables might be a handy place to store locks.
-
-.. code-block:: python
+And pipeline variables might be a handy place to store locks.::
 
    class MyBatch(Batch):
        ...
@@ -358,14 +334,12 @@ And pipeline variables might be a handy place to store locks.
                    ...
 
 Join and merge
---------------
+==============
 
 Joining pipelines
 ^^^^^^^^^^^^^^^^^
 
-If you have a pipeline `images` and a pipeline `labels`, you might join them for a more convenient processing:
-
-.. code-block:: python
+If you have a pipeline `images` and a pipeline `labels`, you might join them for a more convenient processing::
 
     images_with_labels = (images.p
         .load(...)
@@ -375,16 +349,13 @@ If you have a pipeline `images` and a pipeline `labels`, you might join them for
         .some_action()
     )
 
-When this pipeline is run, the following will happen for each batch of `images`\ :
+When this pipeline is run, the following will happen for each batch of `images`:
 
-
-* the actions `load`\ , `resize` and `random_rotate` will be executed
+* the actions `load`, `resize` and `random_rotate` will be executed
 * a batch of `labels` with the same index will be created
-* the `labels` batch will be passed into `some_action` as a first argument (after `self`\ , of course).
+* the `labels` batch will be passed into `some_action` as a first argument (after `self`, of course).
 
-So, images batch class should look as follows:
-
-.. code-block:: python
+So, images batch class should look as follows::
 
    class ImagesBatch(Batch):
        def load(self, src, fmt):
@@ -399,9 +370,7 @@ So, images batch class should look as follows:
        def some_actions(self, labels_batch):
            ...
 
-You can join several sources:
-
-.. code-block:: python
+You can join several sources::
 
     full_images = (images.p
         .load(...)
@@ -411,11 +380,9 @@ You can join several sources:
         .some_action()
     )
 
-Thus, the tuple of batches from `labels` and `masks` will be passed into `some_action` as the first arguments (as always, after `self`\ ).
+Thus, the tuple of batches from `labels` and `masks` will be passed into `some_action` as the first arguments (as always, after `self`).
 
-Mostly, `join` is used as follows:
-
-.. code-block:: python
+Mostly, `join` is used as follows::
 
     full_images = (images.p
         .load(...)
@@ -429,9 +396,7 @@ See :func:`~dataset.Batch.load` for more details.
 Merging pipelines
 ^^^^^^^^^^^^^^^^^
 
-You can also merge data from two pipelines (this is not the same as `concatenating pipelines <#algebra-of-pipelines>`_).
-
-.. code-block:: python
+You can also merge data from two pipelines (this is not the same as `concatenating pipelines <#algebra-of-pipelines>`_).::
 
     images_with_augmentation = (images_dataset.p
         .load(...)
@@ -460,14 +425,13 @@ The default `Batch.merge` just concatenate data from both batches, thus making a
 
 Take into account that the default `merge` also changes index to `numpy.arange(new_size)`.
 
+
 Rebatch
--------
+=======
 
 When actions change the batch size (for instance, dropping some bad or skipping incomplete data),
 you might end up in a situation when you don't know the batch size and, what is sometimes much worse,
-batch size differs. To solve this problem, just call `rebatch`\ :
-
-.. code-block:: python
+batch size differs. To solve this problem, just call `rebatch`::
 
     images_pipeline = (images_dataset.p
         .load(...)
@@ -477,14 +441,14 @@ batch size differs. To solve this problem, just call `rebatch`\ :
         .rebatch(32)
     )
 
-Under the hood `rebatch` calls `merge`\ , so you must ensure that `merge` works properly for your specific data and write your own `merge` if needed.
+Under the hood `rebatch` calls `merge`, so you must ensure that `merge` works properly for your specific data and write your own `merge` if needed.
+
 
 Models
-------
-
+======
 See :doc:`Working with models <models>`.
 
-API
----
 
+API
+===
 See :doc:`pipelines API <../api/dataset.pipeline>`.

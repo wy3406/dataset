@@ -3,8 +3,8 @@
 import os
 import threading
 
+import dill
 try:
-    import dill
     import blosc
 except ImportError:
     pass
@@ -40,6 +40,27 @@ class Batch(BaseBatch):
         super().__init__(index, *args, **kwargs)
         self._preloaded = preloaded
         self._preloaded_lock = threading.Lock()
+        self.pipeline = None
+
+    def deepcopy(self):
+        """ Return a deep copy of the batch.
+
+        Constructs a new ``Batch`` instance and then recursively copies all
+        the objects found in the original batch, except the ``pipeline``,
+        which remains unchanged.
+
+        Returns
+        -------
+        Batch
+        """
+        pipeline = self.pipeline
+        self.pipeline = None
+        dump_batch = dill.dumps(self)
+        self.pipeline = pipeline
+
+        restored_batch = dill.loads(dump_batch)
+        restored_batch.pipeline = pipeline
+        return restored_batch
 
     @classmethod
     def from_data(cls, index, data):
@@ -146,7 +167,7 @@ class Batch(BaseBatch):
             dataset_class = dataset
         else:
             raise TypeError("dataset should be some Dataset class or an instance of some Dataset class or None")
-        return dataset_class(self.index, preloaded=self.data)
+        return dataset_class(self.index, batch_class=type(self), preloaded=self.data)
 
     @property
     def indices(self):
@@ -169,19 +190,57 @@ class Batch(BaseBatch):
         res = self._data if self.components is None else self._data_named
         return res if res is not None else self._empty_data
 
-    def make_item_class(self):
+    def make_item_class(self, local=False):
         """ Create a class to handle data components """
         # pylint: disable=protected-access
         if self.components is None:
             type(self)._item_class = None
-        elif type(self)._item_class is None:
+        elif type(self)._item_class is None or not local:
             comp_class = MetaComponentsTuple(type(self).__name__ + 'Components', components=self.components)
             type(self)._item_class = comp_class
+        else:
+            comp_class = MetaComponentsTuple(type(self).__name__ + 'Components' + str(id(self)),
+                                             components=self.components)
+            self._item_class = comp_class
+
+    @action
+    def add_components(self, components, init=None):
+        """ Add new components
+
+        Parameters
+        ----------
+        components : str or list
+            new component names
+        init : array-like
+            initial component data
+        """
+        if isinstance(components, str):
+            components = (components,)
+            init = (init,)
+        elif isinstance(components, list):
+            components = tuple(components)
+
+        data = self._data
+        if self.components is None:
+            self.components = components
+            data = tuple()
+        else:
+            self.components = self.components + components
+            data = data + tuple(init)
+        self.make_item_class(local=True)
+        self._data = data
+
+        return self
 
     def __getstate__(self):
         state = self.__dict__.copy()
         state.pop('_data_named')
         return state
+
+    def __setstate__(self, state):
+        for k, v in state.items():
+            # this warrants that all hidden objects are reconstructed upon unpickling
+            setattr(self, k, v)
 
     @property
     def _empty_data(self):
@@ -357,25 +416,30 @@ class Batch(BaseBatch):
 
     @action
     @inbatch_parallel(init='indices')
-    def apply_transform(self, ix, dst, src, func, *args, **kwargs):
+    def apply_transform(self, ix, func, *args, src=None, dst=None, **kwargs):
         """ Apply a function to each item in the batch
 
         Parameters
         ----------
-        dst : str or array
-            the destination to put the result in, can be:
-
-            - str - a component name, e.g. 'images' or 'masks'
-            - array-like - a numpy-array, list, etc
+        func : callable
+            a function to apply to each item from the source
 
         src : str or array
             the source to get data from, can be:
 
+            - None
             - str - a component name, e.g. 'images' or 'masks'
             - array-like - a numpy-array, list, etc
 
-        func : callable
-            a function to apply to each item from the source
+        dst : str or array
+            the destination to put the result in, can be:
+
+            - None
+            - str - a component name, e.g. 'images' or 'masks'
+            - array-like - a numpy-array, list, etc
+
+        args, kwargs
+            parameters passed to ``func``
 
         Notes
         -----
@@ -391,39 +455,46 @@ class Batch(BaseBatch):
             _args = args
         else:
             if isinstance(src, str):
-                src_attr = self.get(ix, src)
+                pos = self.get_pos(None, src, ix)
+                src_attr = getattr(self, src)[pos]
             else:
                 pos = self.get_pos(None, dst, ix)
                 src_attr = src[pos]
             _args = tuple([src_attr, *args])
 
         if isinstance(dst, str):
-            dst_attr = self.get(component=dst)
+            dst_attr = getattr(self, dst)
             pos = self.get_pos(None, dst, ix)
         else:
             dst_attr = dst
             pos = self.get_pos(None, src, ix)
-        dst_attr[pos] = func(*_args, **kwargs)
+        if dst_attr is not None:
+            dst_attr[pos] = func(*_args, **kwargs)
 
     @action
-    def apply_transform_all(self, dst, src, func, *args, **kwargs):
+    def apply_transform_all(self, func, *args, src=None, dst=None, **kwargs):
         """ Apply a function the whole batch at once
 
         Parameters
         ----------
-        dst : str or array
-            the destination to put the result in, can be:
+        func : callable
+            a function to apply to each item from the source
 
-            - str - a component name, e.g. 'images' or 'masks'
-            - array-like - a numpy-array, list, etc
         src : str or array
             the source to get data from, can be:
 
             - str - a component name, e.g. 'images' or 'masks'
             - array-like - a numpy-array, list, etc
 
-        func : callable
-            a function to apply to each item from the source
+        dst : str or array
+            the destination to put the result in, can be:
+
+            - None
+            - str - a component name, e.g. 'images' or 'masks'
+            - array-like - a numpy-array, list, etc
+
+        args, kwargs
+            parameters passed to ``func``
 
         Notes
         -----
@@ -439,13 +510,15 @@ class Batch(BaseBatch):
             _args = args
         else:
             if isinstance(src, str):
-                src_attr = self.get(component=src)
+                src_attr = getattr(self, src)
             else:
                 src_attr = src
             _args = tuple([src_attr, *args])
 
         tr_res = func(*_args, **kwargs)
-        if isinstance(dst, str):
+        if dst is None:
+            pass
+        elif isinstance(dst, str):
             setattr(self, dst, tr_res)
         else:
             dst[:] = tr_res

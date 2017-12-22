@@ -2,7 +2,6 @@
 dataset.models.tf
 =================
 
-
 .. toctree::
 
     dataset.models.tf.base
@@ -12,10 +11,17 @@ dataset.models.tf
     dataset.models.tf.mobilenet
     dataset.models.tf.squeezenet
     dataset.models.tf.densenet
+    dataset.models.tf.resattention
 
     dataset.models.tf.fcn
     dataset.models.tf.unet
     dataset.models.tf.linknet
+    dataset.models.tf.vnet
+    dataset.models.tf.densenet_fc
+    dataset.models.tf.refinenet
+    dataset.models.tf.gcn
+
+    dataset.models.tf.faster_rcnn
 
     Custom layers and blocks <dataset.models.tf.layers>
     Custom losses <dataset.models.tf.losses>

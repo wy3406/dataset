@@ -38,14 +38,19 @@ class LinkNet(TFModel):
                                           pool_size=3, pool_strides=2))
         config['body']['num_blocks'] = 4
         config['body']['filters'] = 2 ** np.arange(config['body']['num_blocks']) * filters
+        config['body']['upsample'] = dict(layout='tna', factor=2, kernel_size=3)
 
         config['head']['filters'] = filters // 2
+        config['head']['upsample1'] = dict(layout='tna cna', factor=2, kernel_size=3, strides=[2, 1])
+        config['head']['upsample2'] = dict(layout='t', factor=2)
+        config['loss'] = 'ce'
 
         return config
 
     def build_config(self, names=None):
         config = super().build_config(names)
         config['head']['num_classes'] = self.num_classes('targets')
+        config['head']['targets'] = self.targets
         return config
 
     @classmethod
@@ -70,20 +75,20 @@ class LinkNet(TFModel):
             x = inputs
             encoder_outputs = []
             for i, ifilters in enumerate(filters):
-                x = cls.downsampling_block(x, filters=ifilters, name='downsampling-'+str(i), **kwargs)
+                x = cls.encoder_block(x, filters=ifilters, name='encoder-'+str(i), **kwargs)
                 encoder_outputs.append(x)
 
             for i, ifilters in enumerate(filters[::-1][1:]):
-                x = cls.upsampling_block(x, filters=ifilters, name='upsampling-'+str(i), **kwargs)
+                x = cls.decoder_block(x, filters=ifilters, name='decoder-'+str(i), **kwargs)
                 x = cls.crop(x, encoder_outputs[-i-2], data_format=kwargs.get('data_format'))
                 x = tf.add(x, encoder_outputs[-2-i])
-            x = cls.upsampling_block(x, filters[0], 'upsampling-'+str(i+1), **kwargs)
+            x = cls.decoder_block(x, filters[0], 'decoder-'+str(i+1), **kwargs)
             x = cls.crop(x, inputs, data_format=kwargs.get('data_format'))
 
         return x
 
     @classmethod
-    def downsampling_block(cls, inputs, filters, name, **kwargs):
+    def encoder_block(cls, inputs, filters, name, **kwargs):
         """ Two ResNet blocks of two 3x3 convolution + shortcut
 
         Parameters
@@ -99,10 +104,10 @@ class LinkNet(TFModel):
         -------
         tf.Tensor
         """
-        return ResNet.double_block(inputs, filters=filters, name=name, strides=2, **kwargs)
+        return ResNet.double_block(inputs, filters=filters, name=name, downsample=True, **kwargs)
 
     @classmethod
-    def upsampling_block(cls, inputs, filters, name, **kwargs):
+    def decoder_block(cls, inputs, filters, name, **kwargs):
         """ 1x1 convolution, 3x3 transposed convolution with stride=2 and 1x1 convolution
 
         Parameters
@@ -118,18 +123,26 @@ class LinkNet(TFModel):
         -------
         tf.Tensor
         """
-        num_filters = inputs.get_shape()[-1].value // 4
-        return conv_block(inputs, 'cna tna cna', [num_filters, num_filters, filters], [1, 3, 1],
-                          name=name, strides=[1, 2, 1], **kwargs)
+        upsample_args = cls.pop('upsample', kwargs)
+
+        num_filters = cls.num_channels(inputs, kwargs.get('data_format')) // 4
+        with tf.variable_scope(name):
+            x, inputs = inputs, None
+            x = conv_block(x, 'cna', num_filters, kernel_size=1, name='conv_pre', **kwargs)
+            x = cls.upsample(x, filters=num_filters, name='upsample', **upsample_args, **kwargs)
+            x = conv_block(x, 'cna', filters, kernel_size=1, name='conv_post', **kwargs)
+        return x
 
     @classmethod
-    def head(cls, inputs, num_classes, name='head', **kwargs):
+    def head(cls, inputs, targets, num_classes, name='head', **kwargs):
         """ 3x3 transposed convolution, 3x3 convolution and 2x2 transposed convolution
 
         Parameters
         ----------
         inputs : tf.Tensor
             input tensor
+        targets : tf.Tensor
+            target tensor
         num_classes : int
             number of classes (and number of filters in the last convolution)
         name : str
@@ -141,7 +154,12 @@ class LinkNet(TFModel):
         """
         kwargs = cls.fill_params('head', **kwargs)
         filters = kwargs.pop('filters')
+        upsample1_args = cls.pop('upsample1', kwargs)
+        upsample2_args = cls.pop('upsample2', kwargs)
 
-        x = conv_block(inputs, 'tna cna t', [filters, filters, num_classes], [3, 3, 2],
-                       strides=[2, 1, 2], name=name, **kwargs)
+        with tf.variable_scope(name):
+            x, inputs = inputs, None
+            x = cls.upsample(x, filters=filters, name='upsample1', **upsample1_args, **kwargs)
+            x = cls.upsample(x, filters=num_classes, name='upsample2', **upsample2_args, **kwargs)
+            x = cls.crop(x, targets, data_format=kwargs.get('data_format'))
         return x

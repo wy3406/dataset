@@ -8,7 +8,7 @@ import tensorflow as tf
 sys.path.append("../..")
 from dataset import Pipeline, B, C, F, V
 from dataset.opensets import MNIST
-from dataset.models.tf import FCN32, FCN16, FCN8, LinkNet, UNet
+from dataset.models.tf import FCN32, FCN16, FCN8, LinkNet, UNet, VNet, DenseNetFC56, RefineNet, GlobalConvolutionNetwork
 
 
 def make_masks(batch, *args):
@@ -17,9 +17,20 @@ def make_masks(batch, *args):
     masks[coords] = batch.labels[coords[0]]
     return np.squeeze(masks)
 
+def make3d_images(batch, *args):
+    images = np.concatenate([batch.images] * 14, axis=3)
+    return np.expand_dims(images, axis=4)
+
+def make3d_masks(batch, *args):
+    images = np.concatenate([batch.images] * 14, axis=3)
+    masks = np.zeros_like(images)
+    coords = np.where(images > 0)
+    masks[coords] = batch.labels[coords[0]]
+    return np.squeeze(masks)
+
 
 if __name__ == "__main__":
-    BATCH_SIZE = 16
+    BATCH_SIZE = 4
 
     mnist = MNIST()
 
@@ -27,19 +38,23 @@ if __name__ == "__main__":
                 .init_variable('loss_history', init_on_each_run=list)
                 .init_variable('current_loss', init_on_each_run=0)
                 .init_variable('pred_label', init_on_each_run=list)
-                .init_model('dynamic', UNet, 'conv',
+                .init_model('dynamic', GlobalConvolutionNetwork, 'conv',
                             config={'loss': 'ce',
                                     'optimizer': {'name':'Adam', 'use_locking': True},
-                                    'inputs': dict(images={'shape': (28, 28, 1)},
-                                                   masks={'shape': (28, 28), 'classes': 10, 'transform': 'ohe', 'name': 'targets'}),
-                                    #'input_block': {'filters': 16}
+                                    'inputs': dict(images={'shape': (None, None, 1)},
+                                                   masks={'shape': (None, None), 'classes': 10, 'transform': 'ohe', 'name': 'targets'}),
+                                    #'input_block/filters': 32,
+                                    'input_block/inputs': 'images',
+                                    'body/encoder/filters': [16, 32, 64, 128],
                                     })
                                     #'output': dict(ops=['labels', 'accuracy'])})
                 .train_model('conv', fetches='loss',
                                      feed_dict={'images': B('images'),
                                                 'masks': F(make_masks)},
+                                     #feed_dict={'images': F(make3d_images), #B('images'),
+                                     #           'masks': F(make3d_masks)},
                              save_to=V('current_loss'))
-                .print_variable('current_loss')
+                .print(V('current_loss'))
                 .update_variable('loss_history', V('current_loss'), mode='a'))
 
     train_pp = (train_template << mnist.train)

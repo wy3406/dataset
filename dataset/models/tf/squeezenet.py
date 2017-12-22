@@ -41,6 +41,7 @@ class SqueezeNet(TFModel):
         config['body']['filters'] = layers_filters
 
         config['head'].update(dict(layout='dcnaV', kernel_size=1, strides=1, dropout_rate=.5))
+        config['loss'] = 'ce'
 
         return config
 
@@ -71,7 +72,7 @@ class SqueezeNet(TFModel):
         layout = kwargs.pop('layout')
         filters = kwargs.pop('filters')
 
-        x = inputs
+        x, inputs = inputs, None
         bypass = None
         with tf.variable_scope(name):
             for i, block in enumerate(layout):
@@ -83,8 +84,8 @@ class SqueezeNet(TFModel):
                     x = conv_block(x, 'p', name='max-pool-%d' % i, **kwargs)
 
                 if bypass is not None:
-                    bypass_channels = cls.channels_shape(bypass, kwargs.get('data_format'))
-                    x_channels = cls.channels_shape(x, kwargs.get('data_format'))
+                    bypass_channels = cls.num_channels(bypass, kwargs.get('data_format'))
+                    x_channels = cls.num_channels(x, kwargs.get('data_format'))
 
                     if x_channels != bypass_channels:
                         bypass = conv_block(bypass, 'c', x_channels, 1, name='bypass-%d' % i, **kwargs)
@@ -108,7 +109,8 @@ class SqueezeNet(TFModel):
         tf.Tensor
         """
         with tf.variable_scope(name):
-            x = conv_block(inputs, layout, filters, 1, name='squeeze-1x1', **kwargs)
+            x, inputs = inputs, None
+            x = conv_block(x, layout, filters, 1, name='squeeze-1x1', **kwargs)
 
             exp1 = conv_block(x, layout, filters*4, 1, name='expand-1x1', **kwargs)
             exp3 = conv_block(x, layout, filters*4, 3, name='expand-3x3', **kwargs)

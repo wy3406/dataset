@@ -9,7 +9,8 @@ sys.path.append("../..")
 from dataset import Pipeline, B, C, F, V
 from dataset.opensets import MNIST
 from dataset.models.tf import TFModel, VGG16, VGG19, VGG7, FCN32, ResNet18, ResNet34, ResNet50, ResNet101, ResNet152, \
-                              Inception_v1, Inception_v3, SqueezeNet, MobileNet
+                              Inception_v1, Inception_v3, Inception_v4, SqueezeNet, MobileNet, DenseNet121, \
+                              ResNetAttention56
 
 class MyModel(TFModel):
     def _build(self, config=None):
@@ -17,30 +18,33 @@ class MyModel(TFModel):
         pass
 
 if __name__ == "__main__":
-    BATCH_SIZE = 4
+    BATCH_SIZE = 64
 
     mnist = MNIST()
 
-    train_template = (Pipeline()
+    train_template = (Pipeline(config=dict(model=VGG7))
+                .init_variable('model', ResNet18)
                 .init_variable('loss_history', init_on_each_run=list)
                 .init_variable('current_loss', init_on_each_run=0)
                 .init_variable('pred_label', init_on_each_run=list)
-                .init_model('dynamic', MyModel, 'conv',
+                .init_model('dynamic', V('model'), 'conv',
                             config={'inputs': dict(images={'shape': B('image_shape')},
                                                    labels={'classes': 10, 'transform': 'ohe', 'name': 'targets'}),
                                     'input_block/inputs': 'images',
-                                    'head/units': [100, 100, 10],
-                                    'loss': None,
-                                    'optimizer': None,
-                                    #'filters': 16, 'width_factor': 1,
+                                    'input_block/filters': 16,
+                                    #'body/block/bottleneck': 1,
+                                    #'head/units': [100, 100, 10],
+                                    #'nothing': F(lambda batch: batch.images.shape[1:]),
+                                    #'body/block/filters': 16,
+                                    'body/block/width_factor': 2,
                                     #'body': dict(se_block=1, se_factor=4, resnext=1, resnext_factor=4, bottleneck=1),
-                                    'output': dict(ops=['labels', 'accuracy'])})
-                .resize(shape=(128, 128))
-                .train_model('conv', #fetches='loss',
+                                    'output': dict(ops=['accuracy'])})
+                #.resize(shape=(64, 64))
+                .train_model('conv', fetches='loss',
                                      feed_dict={'images': B('images'),
                                                 'labels': B('labels')},
                              save_to=V('current_loss'), use_lock=True)
-                .print_variable('current_loss')
+                .print(V('current_loss'), model=V('model'))
                 .update_variable('loss_history', V('current_loss'), mode='a'))
 
     train_pp = (train_template << mnist.train)
@@ -56,8 +60,8 @@ if __name__ == "__main__":
     test_pp = (mnist.test.p
                 .import_model('conv', train_pp)
                 .init_variable('accuracy', init_on_each_run=list)
-                .predict_model('conv', fetches='accuracy', feed_dict={'images': B('images'),
-                                                                      'labels': B('labels')},
+                .predict_model('conv', fetches='output_accuracy', feed_dict={'images': B('images'),
+                                                                             'labels': B('labels')},
                                save_to=V('accuracy'), mode='a')
                 .run(BATCH_SIZE, shuffle=True, n_epochs=1, drop_last=True, prefetch=0))
     print("End testing", time() - t)
