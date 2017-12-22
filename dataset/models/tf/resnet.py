@@ -114,7 +114,7 @@ class ResNet(TFModel):
                         downsample = i > 0 and block == 0
                         block_args['downsample'] = downsample
                         x = cls.block(x, filters=filters[i], name='block-%d' % block, **block_args)
-                        x = tf.identity(x, name='output')
+                    x = tf.identity(x, name='output')
         return x
 
     @classmethod
@@ -367,6 +367,7 @@ class ResNet(TFModel):
                 tensor_name = scope + '/body/group-%d'%i + '/output:0'
                 x = tf.get_default_graph().get_tensor_by_name(tensor_name)
                 encoder_tensors.append(x)
+
         return encoder_tensors
 
 

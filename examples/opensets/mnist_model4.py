@@ -46,6 +46,7 @@ if __name__ == "__main__":
                                     #'input_block/filters': 32,
                                     'input_block/inputs': 'images',
                                     'body/encoder/filters': [16, 32, 64, 128],
+                                    'microbatch': True,
                                     })
                                     #'output': dict(ops=['labels', 'accuracy'])})
                 .train_model('conv', fetches='loss',
