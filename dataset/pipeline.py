@@ -7,10 +7,6 @@ import asyncio
 import logging
 import queue as q
 import numpy as np
-try:
-    import tensorflow as tf
-except ImportError:
-    pass
 
 from .batch_base import BaseBatch
 from .base import Baseset
@@ -85,8 +81,6 @@ class Pipeline:
                         self._action_list[-1]['repeat'] = mult_option(repeat, self.get_last_action_repeat())
             self._lazy_run = pipeline._lazy_run          # pylint: disable=protected-access
             self.models = {**pipeline.models}
-
-        self._tf_session = None
 
         self._stop_flag = False
         self._executor = None
@@ -372,30 +366,58 @@ class Pipeline:
             if var['init_on_each_run']:
                 self.set_variable(name, var['default'] if var['init'] is None else var['init']())
 
-    def set_variable(self, name, value):
+    def lock_variable(self, name):
+        """ Acquire a variable lock to prevent race condition and allow mutlithreaded pipeline execution """
+        if self._variables[name]['lock'] is not None:
+            self._variables[name]['lock'].acquire()
+
+    def unlock_variable(self, name):
+        """ Release a previsouly acquired variable lock """
+        if self._variables[name]['lock'] is not None:
+            self._variables[name]['lock'].release()
+
+    def set_variable(self, name, value, mode='w', batch=None):
         """ Set a variable value
         If the variable does not exists, it will be created, however, the warning will be displayed that
         the variable was not initialized.
 
         Parameters
         ----------
-        name : str - a name of the variable
-        value - a value for the variable
+        name : str or a named expression - a variable name
 
-        Returns
-        -------
-        self - in order to use it in the pipeline chains
+        value
+            an updating value, could be a value of any type or a named expression
+
+        mode : str
+            a method to update a variable value, could be one of:
+
+            - 'w' or 'write' to rewrite a variable with a new value. This is a default mode.
+            - 'a' or 'append' to append a value to a variable (e.g. if a variable is a list).
+            - 'e' or 'extend' to extend a variable with a new value (e.g. if a variable is a list).
+            - 'u' or 'update' to update a variable with a new value (e.g. if a variable is a dict).
+
+            For sets and dicts 'a' and 'u' do exactly the same.
+
+        Notes
+        -----
+        Unlike :meth:`~.Pipeline.update_variable` this method sets a new value immediately.
+        So ``set_variable`` is imperative and may be used within actions, while ``update_variable``
+        is declarative and should be used in pipeline definition chains.
         """
-        if not self.has_variable(name):
-            logging.warning("Pipeline variable '%s' has not been initialized", name)
+        V(name).set(value, batch=batch, pipeline=self, mode=mode)
+
+    def assign_variable(self, name, value, batch=None):
+        """ Assign a value to a variable """
+        var_name = self._get_value(name, batch=batch)
+
+        if not self.has_variable(var_name):
+            logging.warning("Pipeline variable '%s' has not been initialized", var_name)
+            self.init_variable(var_name)
+
+        self.lock_variable(var_name)
+        value = self._get_value(value, batch=batch)
         self._variables[name].update({'value': value})
-        return self
-
-    def assign_variable(self, name, value):
-        """ Assign a value to a variable
-        Same as `set_variable(name, value)`.
-        """
-        return self.set_variable(name, value)
+        self.unlock_variable(var_name)
 
     def delete_variable(self, name):
         """ Delete a variable
@@ -441,7 +463,7 @@ class Pipeline:
             raise KeyError("No such variable %s exists", action['var_name'])
 
     def update_variable(self, name, value=None, mode='w'):
-        """ Update a value of a given variable during pipeline execution
+        """ Update a value of a given variable lazily during pipeline execution
 
         Parameters
         ----------
@@ -470,25 +492,18 @@ class Pipeline:
         Returns
         -------
         self - in order to use it in the pipeline chains
+
+        Notes
+        -----
+        Unlike :meth:`~.Pipeline.set_variable` this method does not change a value of the variable
+        until the pipeline is run. So it should be used in pipeline definition chains only.
+        ``set_variable`` is imperative and may be used to change variable value within actions.
         """
         self._action_list.append({'name': UPDATE_VARIABLE_ID, 'var_name': name, 'value': value, 'mode': mode})
         return self.append_action()
 
     def _exec_update_variable(self, batch, action):
-        var_name = self._get_value(action['var_name'], batch)
-        if not self.has_variable(var_name):
-            logging.warning("Pipeline variable '%s' has not been initialized", action['var_name'])
-            self.init_variable(var_name)
-
-        if self._variables[var_name]['lock'] is not None:
-            self._variables[var_name]['lock'].acquire()
-
-        value = self._get_value(action['value'], batch)
-
-        V(var_name).set(value, batch=batch, mode=action['mode'])
-
-        if self._variables[var_name]['lock'] is not None:
-            self._variables[var_name]['lock'].release()
+        self.set_variable(action['var_name'], action['value'], action['mode'], batch=batch)
 
     def print(self, *args, **kwargs):
         """ Print a value during pipeline execution """
@@ -596,9 +611,6 @@ class Pipeline:
                     join_batches = None
 
                 batch = self._exec_one_action(batch, _action, _action_args, _action['kwargs'])
-
-                if 'tf_queue' in _action:
-                    self._put_batch_into_tf_queue(batch, _action)
 
             batch.pipeline = self
         return batch
@@ -933,63 +945,6 @@ class Pipeline:
                                    'pipeline': self, 'merge_fn': merge_fn})
         return new_p.append_action()
 
-    def put_into_tf_queue(self, session=None, queue=None, get_tensor=None):
-        """ Insert a tensorflow queue after the action"""
-        if len(self._action_list) > 0:
-            action = dict()
-            action['tf_session'] = session
-            action['tf_queue'] = queue
-            action['get_tensor'] = get_tensor
-            action['tf_enqueue_op'] = None
-            action['tf_placeholders'] = None
-            action['tf_action_lock'] = threading.Lock()
-            self._action_list[-1].update(action)
-        else:
-            raise RuntimeError('tf_queue should be precedeed by at least one action')
-        return self
-
-    @staticmethod
-    def _get_dtypes(tensors=None, action=None):
-        if tensors:
-            return [tensor.dtype for tensor in tensors]
-        return [placeholder.dtype for placeholder in action['tf_placeholders']]
-
-    def _create_tf_queue(self, tensors, action):
-        if action['tf_session'] is None:
-            action['tf_session'] = self._tf_session
-        if action['tf_session'] is None:
-            raise ValueError("Tensorflow session cannot be None")
-        maxsize = 1 if self._prefetch_queue is None else self._prefetch_queue.maxsize
-        with action['tf_session'].graph.as_default():
-            action['tf_queue'] = tf.FIFOQueue(capacity=maxsize, dtypes=self._get_dtypes(tensors, action))
-
-    @staticmethod
-    def _get_tf_placeholders(tensors, action):
-        tensors = tensors if isinstance(tensors, tuple) else tuple([tensors])
-        with action['tf_session'].graph.as_default():
-            placeholders = [tf.placeholder(dtype=tensor.dtype) for tensor in tensors]
-        return placeholders
-
-    @staticmethod
-    def _get_tensor(batch, action):
-        if action['get_tensor'] is None:
-            return batch.data
-        return action['get_tensor'](batch)
-
-    def _put_batch_into_tf_queue(self, batch, action):
-        tensors = self._get_tensor(batch, action)
-        tensors = tensors if isinstance(tensors, tuple) else tuple([tensors])
-        if action['tf_queue'] is None:
-            with action['tf_action_lock']:
-                if action['tf_queue'] is None:
-                    self._create_tf_queue(tensors, action)
-        if action['tf_enqueue_op'] is None:
-            with action['tf_action_lock']:
-                if action['tf_enqueue_op'] is None:
-                    action['tf_placeholders'] = self._get_tf_placeholders(tensors, action)
-                    action['tf_enqueue_op'] = action['tf_queue'].enqueue(action['tf_placeholders'])
-        action['tf_session'].run(action['tf_enqueue_op'], feed_dict=dict(zip(action['tf_placeholders'], tensors)))
-
 
     def _put_batches_into_queue(self, gen_batch):
         while not self._stop_flag:
@@ -1096,7 +1051,6 @@ class Pipeline:
                   *args, **kwargs):
         """ Generate batches """
         target = kwargs.pop('target', 'threads')
-        self._tf_session = kwargs.pop('tf_session', None)
 
         if len(self._action_list) > 0 and self._action_list[0]['name'] == REBATCH_ID:
             batch_generator = self.gen_rebatch(batch_size, shuffle, n_epochs, drop_last, prefetch, *args, **kwargs)

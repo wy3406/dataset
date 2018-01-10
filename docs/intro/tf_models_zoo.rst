@@ -1,6 +1,6 @@
-===================
-Ready to use models
-===================
+=================
+Predefined models
+=================
 
 .. toctree::
     ../api/dataset.models.tf.vgg
@@ -10,6 +10,8 @@ Ready to use models
     ../api/dataset.models.tf.squeezenet
     ../api/dataset.models.tf.densenet
     ../api/dataset.models.tf.resattention
+
+    ../api/dataset.models.tf.encoder_decoder
 
     ../api/dataset.models.tf.fcn
     ../api/dataset.models.tf.unet
