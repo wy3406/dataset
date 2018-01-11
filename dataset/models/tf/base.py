@@ -572,12 +572,6 @@ class TFModel(BaseModel):
 
         return optimizer
 
-    def get_trainable_vars(self):
-        """ Return all trainable variables in the model graph """
-        with self.graph.as_default():
-            vars = tf.trainable_variables()
-        return vars
-
     def get_number_of_trainable_vars(self):
         """ Return the number of trainable variables in the model graph """
         arr = np.asarray([np.prod(self.get_shape(v)) for v in self.get_trainable_variables()])
@@ -654,7 +648,8 @@ class TFModel(BaseModel):
             update_batch_size_op = batch_size_var.assign_add(microbatch_size)
             update_op = update_grad_ops + [update_batch_size_op]
 
-            train_op = optimizer.apply_gradients([(grad_acc_vars[i] / batch_size_var, v) for i, (_, v) in enumerate(grad)])
+            grad = [(grad_acc_vars[i] / batch_size_var, v) for i, (_, v) in enumerate(grad)]
+            train_op = optimizer.apply_gradients(grad)
         return train_op, update_op, zero_op
 
     def _map_name(self, name):
@@ -763,7 +758,7 @@ class TFModel(BaseModel):
                     self.session.run(self._update_grad, feed_dict=_feed_dict)
 
                 _fetches = self._fill_fetches(fetches, default=None)
-                _, output = self.session.run([self.train_step,  _fetches], feed_dict=_feed_dict)
+                _, output = self.session.run([self.train_step, _fetches], feed_dict=_feed_dict)
                 output = self._fill_output(output, _fetches)
             else:
                 _feed_dict = self._fill_feed_dict(feed_dict, is_training=True)
