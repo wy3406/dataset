@@ -250,22 +250,16 @@ class TFModel(BaseModel):
                     optimizer = self._make_optimizer(config)
 
                     if optimizer:
-                        update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
-                        with tf.control_dependencies(update_ops):
-                            if self._microbatch:
-                                print(".... Setting microbatching...")
-                                train_step, update_grad, zero_grad = self.setup_microbatching(optimizer)
-                                print(".... Microbatching is ready...")
-                                self.store_to_attr('_update_grad', update_grad)
-                                self.store_to_attr('_zero_grad', zero_grad)
-                            else:
-                                #train_step = optimizer.minimize(self.loss, global_step=self.global_step)
-                                train_vars = tf.trainable_variables()
-                                grad = optimizer.compute_gradients(self.loss, train_vars)
-                                for i, (g, v) in enumerate(grad):
-                                    print(i, g)
-                                    print('  ', v)
-                                train_step = optimizer.apply_gradients(grad)
+                        if self._microbatch:
+                            print(".... Setting microbatching...")
+                            train_step, update_grad, zero_grad = self.setup_microbatching(optimizer)
+                            print(".... Microbatching is ready...")
+                            self.store_to_attr('_update_grad', update_grad)
+                            self.store_to_attr('_zero_grad', zero_grad)
+                        else:
+                            update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
+                            with tf.control_dependencies(update_ops):
+                                train_step = optimizer.minimize(self.loss, global_step=self.global_step)
                         self.store_to_attr('train_step', train_step)
                 else:
                     self.store_to_attr('train_step', self.train_step)
@@ -649,23 +643,18 @@ class TFModel(BaseModel):
         grad_acc_vars = [tf.Variable(tf.zeros_like(var.initialized_value()), trainable=False) for var in train_vars]
         batch_size_var = tf.Variable(tf.zeros(shape=(), dtype=tf.float32), trainable=False)
 
-        zero_grad_ops = [var.assign(tf.zeros_like(var)) for var in grad_acc_vars]
-        zero_batch_size_op = batch_size_var.assign(tf.zeros(shape=(), dtype=tf.float32))
-        #zero_op = tf.group(zero_grad_ops, zero_batch_size_op, name='zero_grad')
-        zero_op = [zero_grad_ops, zero_batch_size_op]
+        update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
+        with tf.control_dependencies(update_ops):
+            zero_grad_ops = [var.assign(tf.zeros_like(var)) for var in grad_acc_vars]
+            zero_batch_size_op = batch_size_var.assign(tf.zeros(shape=(), dtype=tf.float32))
+            zero_op = zero_grad_ops + [zero_batch_size_op]
 
-        print(self.loss)
-        grad = optimizer.compute_gradients(self.loss, train_vars)
-        grad2 = [gv for gv in grad if gv[0] is not None]
-        for i, (g, v) in enumerate(grad):
-            print(i, g)
-            print('  ', v)
-        update_grad_ops = [grad_acc_vars[i].assign_add(g) for i, (g, _) in enumerate(grad)]
-        update_batch_size_op = batch_size_var.assign_add(microbatch_size)
-        #update_op = tf.group(update_grad_ops, update_batch_size_op, name='update_grad')
-        update_op = [update_grad_ops, update_batch_size_op]
+            grad = optimizer.compute_gradients(self.loss, train_vars)
+            update_grad_ops = [grad_acc_vars[i].assign_add(g) for i, (g, _) in enumerate(grad)]
+            update_batch_size_op = batch_size_var.assign_add(microbatch_size)
+            update_op = update_grad_ops + [update_batch_size_op]
 
-        train_op = optimizer.apply_gradients([(grad_acc_vars[i] / batch_size_var, v) for i, (_, v) in enumerate(grad)])
+            train_op = optimizer.apply_gradients([(grad_acc_vars[i] / batch_size_var, v) for i, (_, v) in enumerate(grad)])
         return train_op, update_op, zero_op
 
     def _map_name(self, name):
@@ -759,22 +748,23 @@ class TFModel(BaseModel):
         """
         with self.graph.as_default():
             if self._microbatch:
-                print('Train microbatch', self._microbatch)
-                splitted = []
+                splitted = {}
                 for k, v in feed_dict.items():
-                    splitted[k] = np.array_split(v, len(v))
-                lenv = len(feed_dict.values()[0])
+                    lenv = len(v) // 4
+                    splitted[k] = np.array_split(v, lenv)
 
-                self.session.run(self._zero_grad)
                 for i in range(lenv):
                     _fd = {}
                     for k, v in splitted.items():
                         _fd[k] = v[i]
                     _feed_dict = self._fill_feed_dict(_fd, is_training=True)
+                    if i == 0:
+                        self.session.run(self._zero_grad, feed_dict=_feed_dict)
                     self.session.run(self._update_grad, feed_dict=_feed_dict)
-                _, output = self.session.run([self.train_step, self.loss])
 
-                output = None
+                _fetches = self._fill_fetches(fetches, default=None)
+                _, output = self.session.run([self.train_step,  _fetches], feed_dict=_feed_dict)
+                output = self._fill_output(output, _fetches)
             else:
                 _feed_dict = self._fill_feed_dict(feed_dict, is_training=True)
                 if fetches is None:
