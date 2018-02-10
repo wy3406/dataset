@@ -146,7 +146,10 @@ class FasterRCNN(TFModel):
 
             roi_cropped = roi_pooling_layer(feature_maps, rcn_input_rois,
                                             factor=roi_factor, shape=(7, 7), data_format=kwargs['data_format'])
+
+
             indices, roi_cropped, rcn_input_labels = self._stack_tuple(roi_cropped, rcn_input_labels) # pylint: disable=unbalanced-tuple-unpacking
+            
             rcn_clsf = conv_block(roi_cropped, 'f', units=10, name='output_conv', **kwargs)
 
             loss = self.rcn_loss(rcn_clsf, rcn_input_labels)

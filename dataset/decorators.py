@@ -54,24 +54,18 @@ def _make_action_wrapper(action_method, _use_lock=None):
 
 def action(*args, **kwargs):
     """ Decorator for action methods in :class:`~dataset.Batch` classes
-
     Examples
     --------
-
     .. code-block:: python
-
         @action
         def some_action(self, arg1, arg2):
             ...
-
         @action(model='some_model')
         def train_model(self, model, another_arg):
             ...
-
         @action(use_lock=True)
         def critical_section(self, some_arg, another_arg):
             ...
-
         @action(use_lock='lock_name')
         def another_critical_section(self, some_arg, another_arg):
             ...

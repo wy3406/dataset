@@ -28,13 +28,13 @@ def roi_pooling_layer(inputs, rois, factor=(1, 1), shape=(7, 7), data_format='ch
     """
     with tf.variable_scope(name):
         image_index = tf.constant(0)
-        output_tuple = tf.TensorArray(dtype=tf.float32, size=len(rois))
+        output_tuple = tf.TensorArray(dtype=tf.float32, size=len(rois), infer_shape=False, element_shape=[None, *shape, inputs.get_shape()[-1]])
 
         for image_index, image_rois in enumerate(rois):
             image = inputs[image_index]
             if data_format == 'channels_first':
                 image = tf.transpose(image, [1, 2, 0])
-            cropped_regions = tf.TensorArray(dtype=tf.float32, size=tf.shape(image_rois)[0])
+            cropped_regions = tf.TensorArray(dtype=tf.float32, size=tf.shape(image_rois)[0], infer_shape=False)
             roi_index = tf.constant(0)
 
             cond_rois = lambda roi_index, cropped_regions: tf.less(roi_index, tf.shape(image_rois)[0])
