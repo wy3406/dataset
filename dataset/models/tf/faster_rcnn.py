@@ -129,6 +129,19 @@ class FasterRCNN(TFModel):
                                                     score_threshold=rpn_thresholds[1],
                                                     nonempty=True)
 
+            self.store_to_attr('llll', rcn_input_indices)
+
+            new_indices = []
+            for index in rcn_input_indices:
+                new_index = tf.cond(
+                    tf.equal(tf.shape(index)[0], 0),
+                    lambda: tf.constant((0, ), shape=(1, 1)),
+                    lambda: index
+                    )
+                new_indices.append(new_index)
+
+            rcn_input_indices = new_indices
+
             rcn_input_indices = tf.cond(self.is_training,
                                         lambda: self.create_bbox_batch(rcn_input_indices, rcn_batch),
                                         lambda: rcn_input_indices)
