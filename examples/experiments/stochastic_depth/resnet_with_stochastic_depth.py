@@ -40,18 +40,19 @@ class StochasticResNet(ResNet50):
         prob = np.linspace(1, .6, sum(kwargs['num_blocks']))
         global_block = 0
         with tf.variable_scope(name):
-            x = inputs
+            x, inputs = inputs, None
             for i, n_blocks in enumerate(kwargs['num_blocks']):
-                with tf.variable_scope('block-%d' % i):
+                with tf.variable_scope('group-%d' % i):
                     for block in range(n_blocks):
-                        strides = 2 if i > 0 and block == 0 else 1
+                        downsample = i > 0 and block == 0
+                        block_args['downsample'] = downsample
                         off = tf.cond(kwargs['is_training'], \
                                       lambda: tf.where(tf.random_uniform([1], 0, 1) > (1 - prob[global_block]),
                                                        tf.ones([1]), tf.zeros([1])),
                                       lambda: tf.ones([1]) * prob[global_block])[0]
-                        x = cls.block(x, filters=filters[i], name='layer-%d' % block, off=off,
-                                      strides=strides, **block_args)
+                        x = cls.block(x, filters=filters[i], name='block-%d' % block, off=off, **block_args)
                         global_block += 1
+                    x = tf.identity(x, name='output')
         return x
 
     @classmethod
@@ -84,22 +85,22 @@ class StochasticResNet(ResNet50):
         tf.Tensor
         """
         kwargs = cls.fill_params('body/block', **kwargs)
-        filters = kwargs.pop('filters')
-        bottleneck = kwargs.pop('bottleneck')
-        bottleneck_factor = kwargs.pop('bottleneck_factor')
-        resnext_factor = kwargs.pop('resnext_factor')
-        strides = kwargs.pop('strides')
-        se_block = kwargs.pop('se_block')
-        se_factor = kwargs.pop('se_factor')
-        activation = kwargs.get('activation')
+        filters, downsample = cls.pop(['filters', 'downsample'], kwargs)
+        width_factor = cls.pop('width_factor', kwargs)
+        bottleneck, bottleneck_factor = cls.pop(['bottleneck', 'bottleneck_factor'], kwargs)
+        resnext, resnext_factor = cls.pop(['resnext', 'resnext_factor'], kwargs)
+        se_block, se_factor = cls.pop(['se_block', 'se_factor'], kwargs)
+        post_activation = cls.pop('post_activation', kwargs)
+
 
         with tf.variable_scope(name):
-            if kwargs['resnext']:
+            filters = filters * width_factor
+            if resnext:
                 x = cls.next_sub_block(inputs, filters, bottleneck, resnext_factor, name='sub',
-                                       strides=strides, **kwargs)
+                                       downsample=downsample, **kwargs)
             else:
                 x = cls.sub_block(inputs, filters, bottleneck, bottleneck_factor, name='sub',
-                                  strides=strides, **kwargs)
+                                  downsample=downsample, **kwargs)
 
             data_format = kwargs.get('data_format')
             inputs_channels = cls.num_channels(inputs, data_format)
@@ -107,8 +108,10 @@ class StochasticResNet(ResNet50):
 
             x = tf.cond(tf.cast(off, tf.bool), lambda: x*off, lambda: tf.zeros_like(x))
 
-            if inputs_channels != x_channels or strides > 1:
-                shortcut = conv_block(inputs, 'c', x_channels, 1, name='shortcut', strides=strides, **kwargs)
+            if inputs_channels != x_channels or downsample:
+                strides = 2 if downsample else 1
+                shortcut = conv_block(inputs, name='shortcut', **{**kwargs, **dict(layout='c', filters=x_channels,
+                                                                                   kernel_size=1, strides=strides)})
             else:
                 shortcut = inputs
 
@@ -117,8 +120,8 @@ class StochasticResNet(ResNet50):
 
             x = x + shortcut
 
-            if activation:
-                x = activation(x)
+            if post_activation:
+                x = post_activation(x)
 
             x = tf.identity(x, name='output')
 
