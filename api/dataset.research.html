@@ -1,0 +1,477 @@
+
+
+<!doctype html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>dataset.research &#8212; Dataset 0.3.0 documentation</title>
+    <link rel="stylesheet" href="../_static/bizstyle.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../_static/bizstyle.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="prev" title="dataset.models.metrics" href="dataset.models.metrics.html" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <!--[if lt IE 9]>
+    <script type="text/javascript" src="_static/css3-mediaqueries.js"></script>
+    <![endif]-->
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="dataset.models.metrics.html" title="dataset.models.metrics"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Dataset 0.3.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="dataset.html" accesskey="U">API</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">dataset.research</a><ul>
+<li><a class="reference internal" href="#research">Research</a></li>
+<li><a class="reference internal" href="#executableunit">ExecutableUnit</a></li>
+<li><a class="reference internal" href="#grid">Grid</a></li>
+<li><a class="reference internal" href="#option">Option</a></li>
+<li><a class="reference internal" href="#kv">KV</a></li>
+<li><a class="reference internal" href="#configalias">ConfigAlias</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="dataset.models.metrics.html"
+                        title="previous chapter">dataset.models.metrics</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/api/dataset.research.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="dataset-research">
+<h1>dataset.research<a class="headerlink" href="#dataset-research" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="research">
+<h2>Research<a class="headerlink" href="#research" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="dataset.research.Research">
+<em class="property">class </em><code class="descname">Research</code><a class="reference internal" href="../_modules/dataset/research/research.html#Research"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dataset.research.Research" title="Permalink to this definition">¶</a></dt>
+<dd><p>Class Research for multiple parallel experiments with pipelines.</p>
+<dl class="method">
+<dt id="dataset.research.Research.pipeline">
+<code class="descname">pipeline</code><span class="sig-paren">(</span><em>root</em>, <em>branch=None</em>, <em>variables=None</em>, <em>name=None</em>, <em>execute='%1'</em>, <em>dump=-1</em>, <em>run=False</em>, <em>logging=False</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dataset/research/research.html#Research.pipeline"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dataset.research.Research.pipeline" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add new pipeline to research. Pipeline can be divided into root and branch. In that case root pipeline
+will prepare batch that can be used by different branches with different configs.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>root</strong> (<a class="reference internal" href="dataset.pipeline.html#dataset.Pipeline" title="dataset.Pipeline"><em>dataset.Pipeline</em></a>) – ‘root’ must have run action with <cite>lazy=True</cite>. If <cite>branch</cite> is None then <cite>root</cite>
+may contain parameters that can be defined by grid.</li>
+<li><strong>branch</strong> (<a class="reference internal" href="dataset.pipeline.html#dataset.Pipeline" title="dataset.Pipeline"><em>dataset.Pipeline</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.7)"><em>None</em></a>) – if not None, for resulting batch from <cite>root</cite> <cite>branch.execute_for(batch)</cite> will be called.
+May contain parameters that can be defined by grid.</li>
+<li><strong>variables</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><em>str</em></a><em>, </em><em>list of str</em><em> or </em><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.7)"><em>None</em></a>) – <p>names of pipeline variables to save after each iteration into results. All of them must be
+defined in <cite>root</cite></p>
+<p>If <cite>branch</cite> is None or be defined in <cite>branch</cite> if <cite>branch</cite> is not None.
+If None, pipeline will be executed without any dumping</p>
+</li>
+<li><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><em>str</em></a>) – pipeline name inside research. If name is None, pipeline will have name <cite>ppl_{index}</cite></li>
+<li><strong>execute</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><em>str</em></a><em> or </em><em>list of int</em><em> or </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><em>str</em></a>) – <p>If -1, pipeline will be executed just at last iteration (if <cite>iteration + 1 == n_iters</cite>
+or <cite>StopIteration</cite> was raised)</p>
+<p>If positive int, pipeline will be excuted for that iteration</p>
+<p>If str, must be <cite>‘%{step}’</cite> where step is int</p>
+<p>If list, must be list of int or str descibed above</p>
+</li>
+<li><strong>dump</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><em>str</em></a><em> or </em><em>list of int</em><em> or </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><em>str</em></a>) – iteration when results will be dumped and cleared. Similar to execute</li>
+<li><strong>run</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.7)"><em>bool</em></a>) – if False then <cite>.next_batch()</cite> will be applied to pipeline, else <cite>.run()</cite> and then <cite>.reset_iter()</cite>.</li>
+<li><strong>kwargs</strong> – <p>parameters in pipeline config that depends on the names of the other pipeline.</p>
+<p>For example,
+if test pipeline imports model from the other pipeline with name <cite>‘train’</cite> in Research,
+corresponding parameter in import_model must be <cite>C(‘import_from’)</cite> and add_pipeline
+must be called with parameter <cite>import_from=’train’</cite>.</p>
+</li>
+<li><strong>logging</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.7)"><em>bool</em></a>) – include execution information to log file or not</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p><strong>How to define changing parameters</strong></p>
+<p>All parameters in <cite>root</cite> or <cite>branch</cite> that are defined in grid should be defined
+as <cite>C(‘parameter_name’)</cite>. Corresponding parameter in grid must have the same <cite>‘parameter_name’</cite>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="dataset.research.Research.function">
+<code class="descname">function</code><span class="sig-paren">(</span><em>function</em>, <em>returns=None</em>, <em>name=None</em>, <em>execute='%1'</em>, <em>dump=-1</em>, <em>on_root=False</em>, <em>logging=False</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dataset/research/research.html#Research.function"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dataset.research.Research.function" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add function to research.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>function</strong> (<em>callable</em>) – <dl class="docutils">
+<dt>callable object with following parameters:</dt>
+<dd><dl class="first docutils">
+<dt>experiment <span class="classifier-delimiter">:</span> <span class="classifier"><cite>OrderedDict</cite> of ExecutableUnits</span></dt>
+<dd>all pipelines and functions that were added to Research</dd>
+<dt>iteration <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd>iteration when function is called</dd>
+</dl>
+<p class="last"><a href="#id1"><span class="problematic" id="id2">**</span></a>args, <a href="#id3"><span class="problematic" id="id4">**</span></a>kwargs</p>
+</dd>
+</dl>
+</li>
+<li><strong>returns</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><em>str</em></a><em>, </em><em>list of str</em><em> or </em><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.7)"><em>None</em></a>) – names for function returns to save into results
+if None, <cite>function</cite> will be executed without any saving results and dumping</li>
+<li><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><em>str</em></a><em> (</em><em>default None</em><em>)</em>) – function name inside research. If name is None, pipeline will have name <cite>func_{index}</cite></li>
+<li><strong>execute</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><em>str</em></a><em> or </em><em>list of int</em><em> or </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><em>str</em></a>) – <p>If -1, function will be executed just at last iteration (if <cite>iteration + 1 == n_iters</cite>
+or <cite>StopIteration</cite> was raised)</p>
+<p>If positive int, function will be excuted for that iteration</p>
+<p>If str, must be <cite>‘%{step}’</cite> where step is int</p>
+<p>If list, must be list of int or str descibed above</p>
+</li>
+<li><strong>dump</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><em>str</em></a><em> or </em><em>list of int</em><em> or </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><em>str</em></a>) – iteration when results will be dumped and cleared. Similar to execute</li>
+<li><strong>on_root</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.7)"><em>bool</em></a>) – if False, function will be called with parameters <cite>(iteration, experiment, *args, **kwargs)</cite>,
+else with <cite>(iteration, experiments, *args, **kwargs)</cite> where <cite>experiments</cite> is a list of single experiments</li>
+<li><strong>logging</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.7)"><em>bool</em></a>) – include execution information to log file or not</li>
+<li><strong>args</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.7)"><em>list</em></a>) – args for the function</li>
+<li><strong>kwargs</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.7)"><em>dict</em></a>) – kwargs for the function</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p><strong>How to use experiment</strong></p>
+<p>Each pipeline and function added to Research is saved as an <a class="reference internal" href="#dataset.research.research.ExecutableUnit" title="dataset.research.research.ExecutableUnit"><code class="xref py py-class docutils literal notranslate"><span class="pre">ExecutableUnit</span></code></a>.</p>
+<p>Experiment is an <cite>OrderedDict</cite> of all pipelines and functions that were added to Research
+and are running in current Job. Key is a name of <cite>ExecutableUnit</cite>, value is <cite>ExecutableUnit</cite>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="dataset.research.Research.grid">
+<code class="descname">grid</code><span class="sig-paren">(</span><em>grid_config</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dataset/research/research.html#Research.grid"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dataset.research.Research.grid" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add grid of pipeline parameters. Configs from that grid will be generated
+and then substitute into pipelines.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>grid_config</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.7)"><em>dict</em></a><em>, </em><a class="reference internal" href="#dataset.research.Grid" title="dataset.research.Grid"><em>Grid</em></a><em> or </em><a class="reference internal" href="#dataset.research.Option" title="dataset.research.Option"><em>Option</em></a>) – if dict it should have items parameter_name: list of values.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="dataset.research.Research.run">
+<code class="descname">run</code><span class="sig-paren">(</span><em>n_reps=1</em>, <em>n_iters=None</em>, <em>workers=1</em>, <em>branches=1</em>, <em>name=None</em>, <em>progress_bar=False</em>, <em>gpu=None</em>, <em>worker_class=None</em>, <em>timeout=5</em>, <em>trails=2</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dataset/research/research.html#Research.run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dataset.research.Research.run" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run research.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>n_reps</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a>) – number of repetitions with each combination of parameters from <cite>grid_config</cite></li>
+<li><strong>n_iters</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.7)"><em>None</em></a>) – number of iterations for each configurations. If None, wait StopIteration exception.</li>
+<li><strong>workers</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a><em> or </em><em>list of dicts</em><em> (</em><em>Configs</em><em>)</em>) – <p>If int - number of workers to run pipelines or workers that will run them, <cite>PipelineWorker</cite> will be used.</p>
+<p>If list of dicts (Configs) - list of additional configs which will be appended to configs from tasks.</p>
+<p>Each element corresponds to one worker.</p>
+</li>
+<li><strong>branches</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a><em> or </em><em>list of dicts</em><em> (</em><em>Configs</em><em>)</em>) – <p>Number of different branches with different configs with the same root. Each branch will use the same batch
+from <cite>root</cite>. Pipelines will be executed in different threads.</p>
+<p>If int - number of pipelines with different configs that will use the same prepared batch
+from <cite>root</cite>.</p>
+<p>If list of dicts (Configs) - list of dicts with additional configs to each pipeline.</p>
+</li>
+<li><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><em>str</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.7)"><em>None</em></a>) – name folder to save research. By default is ‘research’.</li>
+<li><strong>progress_bar</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.7)"><em>bool</em></a>) – add tqdm progress bar</li>
+<li><strong>gpu</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><em>str</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.7)"><em>list</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.7)"><em>None</em></a>) – <p>all gpu devices available for the research.</p>
+<p>Must be of length 1 or be divisible
+by the number of workers.</p>
+<p>If is divisible by the number of workers then
+<cite>length / n_workers</cite> must be 1 or be divisible by the number of branches. If you want to use different
+devices in branches, use expression <cite>C(‘device’)</cite>.</p>
+<p>For example, for <a class="reference internal" href="dataset.models.tf.base.html#dataset.models.tf.base.TFModel" title="dataset.models.tf.base.TFModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">TFModel</span></code></a> add <cite>device=C(‘device’)</cite> to model config.
+if None, default gpu configuration will be used</p>
+</li>
+<li><strong>timeout</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a>) – each job will be killed if it doesn’t answer more then that time in minutes</li>
+<li><strong>trails</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a>) – trails to execute job</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p><strong>How does it work</strong></p>
+<p>At each iteration all pipelines and functions will be executed in the order in which were added.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="dataset.research.Research.save">
+<code class="descname">save</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dataset/research/research.html#Research.save"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dataset.research.Research.save" title="Permalink to this definition">¶</a></dt>
+<dd><p>Save description of the research to folder name/description.</p>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="dataset.research.Research.load">
+<em class="property">classmethod </em><code class="descname">load</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dataset/research/research.html#Research.load"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dataset.research.Research.load" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load description of the research from name/description.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="executableunit">
+<h2>ExecutableUnit<a class="headerlink" href="#executableunit" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="dataset.research.research.ExecutableUnit">
+<em class="property">class </em><code class="descname">ExecutableUnit</code><a class="reference internal" href="../_modules/dataset/research/research.html#ExecutableUnit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dataset.research.research.ExecutableUnit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function or pipeline</p>
+<p><strong>Attributes</strong></p>
+<dl class="docutils">
+<dt>function <span class="classifier-delimiter">:</span> <span class="classifier">callable</span></dt>
+<dd>is None if <cite>ExecutableUnit</cite> is a pipeline</dd>
+<dt>pipeline <span class="classifier-delimiter">:</span> <span class="classifier">Pipeline</span></dt>
+<dd>is None if <cite>ExecutableUnit</cite> is a function</dd>
+<dt>root_pipeline <span class="classifier-delimiter">:</span> <span class="classifier">Pipeline</span></dt>
+<dd>is None if <cite>ExecutableUnit</cite> is a function or pipeline is not divided into root and branch</dd>
+<dt>result <span class="classifier-delimiter">:</span> <span class="classifier">dict</span></dt>
+<dd>current results of the <cite>ExecutableUnit</cite>. Keys are names of variables (for pipeline)
+or returns (for function) values are lists of variable values</dd>
+<dt>path <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd>path to the folder where results will be dumped</dd>
+</dl>
+<p>exec : int, list of ints or None
+dump : int, list of ints or None
+to_run : bool
+variables : list</p>
+<blockquote>
+<div>variables (for pipeline) or returns (for function)</div></blockquote>
+<p>on_root : bool</p>
+<p>args : list</p>
+<p>kwargs : dict()</p>
+</dd></dl>
+
+</div>
+<div class="section" id="grid">
+<h2>Grid<a class="headerlink" href="#grid" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="dataset.research.Grid">
+<em class="property">class </em><code class="descname">Grid</code><span class="sig-paren">(</span><em>grid=None</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dataset/research/grid.html#Grid"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dataset.research.Grid" title="Permalink to this definition">¶</a></dt>
+<dd><p>Class for grid of parameters. <cite>Grid</cite> is a list of list of Options. Each list of Options
+will produce configs as an Cartesian multiplications of Option values.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>grid</strong> (<a class="reference internal" href="#dataset.research.Option" title="dataset.research.Option"><em>Option</em></a><em>, </em><a class="reference internal" href="#dataset.research.Grid" title="dataset.research.Grid"><em>Grid</em></a><em> or </em><em>list of lists of Options</em>) – </td>
+</tr>
+</tbody>
+</table>
+<p><strong>Operations with Grids</strong></p>
+<ol class="arabic simple">
+<li>sum by <cite>+</cite>: Concatenate list of Configs generated by Grids</li>
+<li>multiplication by <cite>*</cite>: Cartesian multiplications of Options in Grid.
+For example, if <cite>grid1 = Option(‘a’: [1, 2])</cite> and
+<cite>grid1 = Option(‘b’: [3, 4])</cite> then <cite>grid1 * grid2</cite> will have both options and generate 4 configs:
+<cite>{a: 1, b: 3}</cite>, <cite>{a: 1, b: 4}</cite>, <cite>{a: 2, b: 3}</cite>, <cite>{a: 2, b: 4}</cite>.</li>
+</ol>
+<dl class="method">
+<dt id="dataset.research.Grid.alias">
+<code class="descname">alias</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dataset/research/grid.html#Grid.alias"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dataset.research.Grid.alias" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns alias of Grid.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="dataset.research.Grid.description">
+<code class="descname">description</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dataset/research/grid.html#Grid.description"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dataset.research.Grid.description" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return description of used aliases.
+:returns:
+:rtype: dict</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="dataset.research.Grid.gen_configs">
+<code class="descname">gen_configs</code><span class="sig-paren">(</span><em>n_items=1</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dataset/research/grid.html#Grid.gen_configs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dataset.research.Grid.gen_configs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate Configs from grid</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>n_items</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a>) – how much configs return on each iteration</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="dataset.research.Grid.value">
+<code class="descname">value</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dataset/research/grid.html#Grid.value"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dataset.research.Grid.value" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns config of Grid.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="option">
+<h2>Option<a class="headerlink" href="#option" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="dataset.research.Option">
+<em class="property">class </em><code class="descname">Option</code><span class="sig-paren">(</span><em>parameter</em>, <em>values</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dataset/research/grid.html#Option"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dataset.research.Option" title="Permalink to this definition">¶</a></dt>
+<dd><p>Class for single-parameter option. There is an algebra of options (see <a class="reference internal" href="#dataset.research.Grid" title="dataset.research.Grid"><code class="xref py py-class docutils literal notranslate"><span class="pre">Grid</span></code></a> operations)
+Result is a <cite>Grid</cite>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>parameter</strong> (<a class="reference internal" href="#dataset.research.KV" title="dataset.research.KV"><em>KV</em></a><em> or </em><em>obj</em>) – </li>
+<li><strong>values</strong> (<em>list of KV</em><em> or </em><em>lis of obj</em>) – </li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="dataset.research.Option.alias">
+<code class="descname">alias</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dataset/research/grid.html#Option.alias"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dataset.research.Option.alias" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns alias of the Option</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="dataset.research.Option.gen_configs">
+<code class="descname">gen_configs</code><span class="sig-paren">(</span><em>n_items=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dataset/research/grid.html#Option.gen_configs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dataset.research.Option.gen_configs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns Configs created from the option</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="dataset.research.Option.option">
+<code class="descname">option</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dataset/research/grid.html#Option.option"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dataset.research.Option.option" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns config</p>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="dataset.research.Option.product">
+<em class="property">classmethod </em><code class="descname">product</code><span class="sig-paren">(</span><em>*args</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dataset/research/grid.html#Option.product"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dataset.research.Option.product" title="Permalink to this definition">¶</a></dt>
+<dd><p>Element-wise product of options</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="kv">
+<h2>KV<a class="headerlink" href="#kv" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="dataset.research.KV">
+<em class="property">class </em><code class="descname">KV</code><span class="sig-paren">(</span><em>value</em>, <em>alias=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dataset/research/grid.html#KV"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dataset.research.KV" title="Permalink to this definition">¶</a></dt>
+<dd><p>Class for value and alias</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>value</strong> (<em>obj</em>) – </li>
+<li><strong>alias</strong> (<em>obj</em>) – if None alias will be equal to value.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="configalias">
+<h2>ConfigAlias<a class="headerlink" href="#configalias" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="dataset.research.ConfigAlias">
+<em class="property">class </em><code class="descname">ConfigAlias</code><span class="sig-paren">(</span><em>config</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dataset/research/grid.html#ConfigAlias"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dataset.research.ConfigAlias" title="Permalink to this definition">¶</a></dt>
+<dd><p>Class for config and alias which is represenation of config where all keys and values are str.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>config</strong> (<em>list of</em><em> (</em><em>key</em><em>, </em><em>value</em><em>)</em>) – keys and values are KV or objects</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="dataset.research.ConfigAlias.alias">
+<code class="descname">alias</code><span class="sig-paren">(</span><em>as_string=False</em>, <em>delim='-'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dataset/research/grid.html#ConfigAlias.alias"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dataset.research.ConfigAlias.alias" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns alias.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="dataset.research.ConfigAlias.config">
+<code class="descname">config</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dataset/research/grid.html#ConfigAlias.config"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dataset.research.ConfigAlias.config" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns values.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="dataset.models.metrics.html" title="dataset.models.metrics"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Dataset 0.3.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="dataset.html" >API</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, Analysis Center.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.5.
+    </div>
+  </body>
+</html>

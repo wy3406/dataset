@@ -1,0 +1,538 @@
+
+
+<!doctype html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>dataset.models.metrics &#8212; Dataset 0.3.0 documentation</title>
+    <link rel="stylesheet" href="../_static/bizstyle.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../_static/bizstyle.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="dataset.research" href="dataset.research.html" />
+    <link rel="prev" title="dataset.models" href="dataset.models.html" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <!--[if lt IE 9]>
+    <script type="text/javascript" src="_static/css3-mediaqueries.js"></script>
+    <![endif]-->
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="dataset.research.html" title="dataset.research"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="dataset.models.html" title="dataset.models"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Dataset 0.3.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="dataset.html" >API</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="dataset.models.html" accesskey="U">dataset.models</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">dataset.models.metrics</a><ul>
+<li><a class="reference internal" href="#metrics">Metrics</a></li>
+<li><a class="reference internal" href="#classificationmetrics">ClassificationMetrics</a></li>
+<li><a class="reference internal" href="#segmentationmetricsbypixels">SegmentationMetricsByPixels</a></li>
+<li><a class="reference internal" href="#segmentationmetricsbyinstances">SegmentationMetricsByInstances</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="dataset.models.html"
+                        title="previous chapter">dataset.models</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="dataset.research.html"
+                        title="next chapter">dataset.research</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/api/dataset.models.metrics.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="dataset-models-metrics">
+<h1>dataset.models.metrics<a class="headerlink" href="#dataset-models-metrics" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="metrics">
+<h2>Metrics<a class="headerlink" href="#metrics" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="dataset.models.metrics.Metrics">
+<em class="property">class </em><code class="descname">Metrics</code><a class="reference internal" href="../_modules/dataset/models/metrics/base.html#Metrics"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dataset.models.metrics.Metrics" title="Permalink to this definition">¶</a></dt>
+<dd><p>Base metrics evalation class</p>
+<p>This class is not supposed to be instantiated.
+Use specific children classes instead (e.g. <a class="reference internal" href="#dataset.models.metrics.ClassificationMetrics" title="dataset.models.metrics.ClassificationMetrics"><code class="xref py py-class docutils literal notranslate"><span class="pre">ClassificationMetrics</span></code></a>).</p>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">m</span> <span class="o">=</span> <span class="n">ClassificationMetrics</span><span class="p">(</span><span class="n">targets</span><span class="p">,</span> <span class="n">predictions</span><span class="p">,</span> <span class="n">num_classes</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="s1">&#39;labels&#39;</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">evaluate</span><span class="p">([</span><span class="s1">&#39;sensitivity&#39;</span><span class="p">,</span> <span class="s1">&#39;specificity&#39;</span><span class="p">],</span> <span class="n">multiclass</span><span class="o">=</span><span class="s1">&#39;micro&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="method">
+<dt id="dataset.models.metrics.Metrics.evaluate">
+<code class="descname">evaluate</code><span class="sig-paren">(</span><em>metrics</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dataset/models/metrics/base.html#Metrics.evaluate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dataset.models.metrics.Metrics.evaluate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates metrics</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>metrics</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><em>str</em></a><em> or </em><em>list of str</em>) – metric names</li>
+<li><strong>args</strong> – metric-specific parameters</li>
+<li><strong>kwargs</strong> – metric-specific parameters</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><dl class="docutils">
+<dt>if metrics is a list, then a dict is returned::</dt>
+<dd><ul class="first last simple">
+<li>key - metric name</li>
+<li>value - metric value</li>
+</ul>
+</dd>
+</dl>
+</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">metric value or <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.7)">dict</a></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="classificationmetrics">
+<h2>ClassificationMetrics<a class="headerlink" href="#classificationmetrics" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="dataset.models.metrics.ClassificationMetrics">
+<em class="property">class </em><code class="descname">ClassificationMetrics</code><span class="sig-paren">(</span><em>targets</em>, <em>predictions</em>, <em>fmt='proba'</em>, <em>num_classes=None</em>, <em>axis=None</em>, <em>threshold=0.5</em>, <em>skip_bg=False</em>, <em>calc=True</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dataset/models/metrics/classify.html#ClassificationMetrics"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dataset.models.metrics.ClassificationMetrics" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">dataset.models.metrics.base.Metrics</span></code></p>
+<p>Metrics to assess classification models</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>targets</strong> (<em>np.array</em>) – Ground-truth labels / probabilities / logits</li>
+<li><strong>predictions</strong> (<em>np.array</em>) – Predicted labels / probabilites / logits</li>
+<li><strong>num_classes</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a>) – the number of classes (default is None)</li>
+<li><strong>fmt</strong> (<em>'proba'</em><em>, </em><em>'logits'</em><em>, </em><em>'labels'</em>) – whether arrays contain probabilities, logits or labels</li>
+<li><strong>axis</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a>) – a class axis (default is None)</li>
+<li><strong>threshold</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.7)"><em>float</em></a>) – A probability level for binarization (lower values become 0, equal or greater values become 1)</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li>Input arrays (<cite>targets</cite> and <cite>predictions</cite>) might be vectors or multidimensional arrays,
+where the first dimension represents batch items. The latter is useful for pixel-level metrics.</li>
+<li>Both <cite>targets</cite> and <cite>predictions</cite> usually contain the same data (labels, probabilities or logits).
+However, <cite>targets</cite> might be labels, while <cite>predictions</cite> are probabilities / logits.
+For that to work:<ul>
+<li><cite>targets</cite> should have the shape which exactly 1 dimension smaller, than <cite>predictions</cite> shape;</li>
+<li><cite>axis</cite> should point to that dimension;</li>
+<li><cite>fmt</cite> should contain format of <cite>predictions</cite>.</li>
+</ul>
+</li>
+<li>When <cite>axis</cite> is specified, <cite>predictions</cite> should be a one-hot array with class information provided
+in the given axis (class probabilities or logits). In this case <cite>targets</cite> can contain labels (sew above)
+or probabilities / logits in the very same axis.</li>
+<li>If <cite>fmt</cite> is ‘labels’, <cite>num_classes</cite> should be specified. Due to randomness any given batch may not
+contain items of some classes, so all the labels cannot be inferred as simply as <cite>labels.max()</cite>.</li>
+<li>If <cite>fmt</cite> is ‘proba’ or ‘logits’, then <cite>axis</cite> points to the one-hot dimension.
+However, if <cite>axis</cite> is None, two class classification is assumed and <cite>targets</cite> / <cite>predictions</cite>
+should contain probabilities or logits for a positive class only.</li>
+</ul>
+<p><strong>Metrics</strong>
+All metrics return:</p>
+<ul class="simple">
+<li>a single value if input is a vector for a 2-class task.</li>
+<li>a single value if input is a vector for a multiclass task and multiclass averaging is enabled.</li>
+<li>a vector with batch size items if input is a multidimensional array (e.g. images or sequences)
+and there are just 2 classes or multiclass averaging is on.</li>
+<li>a vector with <cite>num_classes</cite> items if input is a vector for multiclass casse without averaging.</li>
+<li>a 2d array <cite>(batch_items, num_classes)</cite> for multidimensional inputs in a multiclass case without averaging.</li>
+</ul>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Count-based metrics (<cite>true_positive</cite>, <cite>false_positive</cite>, etc.) do not support mutliclass averaging.
+They always return counts for each class separately.
+For multiclass tasks rate metrics, such as <cite>true_positive_rate</cite>, <cite>false_positive_rate</cite>, etc.,
+might seem more convenient.</p>
+</div>
+<p><strong>Multiclass metrics</strong></p>
+<p>In a multiclass case metrics might be calculated with or without class averaging.</p>
+<p>Available methods are:</p>
+<ul class="simple">
+<li><cite>None</cite> - no averaging, calculate metrics for each class individually (one-vs-all)</li>
+<li><dl class="first docutils">
+<dt><cite>‘micro’</cite> - calculate metrics globally by counting the total true positives,</dt>
+<dd>false negatives, false positives, etc. across all classes</dd>
+</dl>
+</li>
+<li><cite>‘macro’</cite> - calculate metrics for each class, and take their mean.</li>
+</ul>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">metrics</span> <span class="o">=</span> <span class="n">ClassificationMetrics</span><span class="p">(</span><span class="n">targets</span><span class="p">,</span> <span class="n">predictions</span><span class="p">,</span> <span class="n">num_classes</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="s1">&#39;labels&#39;</span><span class="p">)</span>
+<span class="n">metrics</span><span class="o">.</span><span class="n">evaluate</span><span class="p">([</span><span class="s1">&#39;sensitivity&#39;</span><span class="p">,</span> <span class="s1">&#39;specificity&#39;</span><span class="p">],</span> <span class="n">multiclass</span><span class="o">=</span><span class="s1">&#39;macro&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="method">
+<dt id="dataset.models.metrics.ClassificationMetrics.accuracy">
+<code class="descname">accuracy</code><span class="sig-paren">(</span><em>agg='mean'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dataset/models/metrics/classify.html#ClassificationMetrics.accuracy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dataset.models.metrics.ClassificationMetrics.accuracy" title="Permalink to this definition">¶</a></dt>
+<dd><p>An accuracy of detecting all the classes combined</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="dataset.models.metrics.ClassificationMetrics.append">
+<code class="descname">append</code><span class="sig-paren">(</span><em>metrics</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dataset/models/metrics/classify.html#ClassificationMetrics.append"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dataset.models.metrics.ClassificationMetrics.append" title="Permalink to this definition">¶</a></dt>
+<dd><p>Append confusion matrix with data from another metrics</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="dataset.models.metrics.ClassificationMetrics.condition_negative">
+<code class="descname">condition_negative</code><span class="sig-paren">(</span><em>label=None</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dataset/models/metrics/classify.html#ClassificationMetrics.condition_negative"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dataset.models.metrics.ClassificationMetrics.condition_negative" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="dataset.models.metrics.ClassificationMetrics.condition_positive">
+<code class="descname">condition_positive</code><span class="sig-paren">(</span><em>label=None</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dataset/models/metrics/classify.html#ClassificationMetrics.condition_positive"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dataset.models.metrics.ClassificationMetrics.condition_positive" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="dataset.models.metrics.ClassificationMetrics.copy">
+<code class="descname">copy</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dataset/models/metrics/classify.html#ClassificationMetrics.copy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dataset.models.metrics.ClassificationMetrics.copy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a duplicate containing only the confusion matrix</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="dataset.models.metrics.ClassificationMetrics.diagnostics_odds_ratio">
+<code class="descname">diagnostics_odds_ratio</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dataset/models/metrics/classify.html#ClassificationMetrics.diagnostics_odds_ratio"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dataset.models.metrics.ClassificationMetrics.diagnostics_odds_ratio" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="dataset.models.metrics.ClassificationMetrics.dice">
+<code class="descname">dice</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dataset/models/metrics/classify.html#ClassificationMetrics.dice"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dataset.models.metrics.ClassificationMetrics.dice" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="dataset.models.metrics.ClassificationMetrics.f1_score">
+<code class="descname">f1_score</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dataset/models/metrics/classify.html#ClassificationMetrics.f1_score"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dataset.models.metrics.ClassificationMetrics.f1_score" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="dataset.models.metrics.ClassificationMetrics.fallout">
+<code class="descname">fallout</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dataset/models/metrics/classify.html#ClassificationMetrics.fallout"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dataset.models.metrics.ClassificationMetrics.fallout" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="dataset.models.metrics.ClassificationMetrics.false_discovery_rate">
+<code class="descname">false_discovery_rate</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dataset/models/metrics/classify.html#ClassificationMetrics.false_discovery_rate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dataset.models.metrics.ClassificationMetrics.false_discovery_rate" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="dataset.models.metrics.ClassificationMetrics.false_negative">
+<code class="descname">false_negative</code><span class="sig-paren">(</span><em>label=None</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dataset/models/metrics/classify.html#ClassificationMetrics.false_negative"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dataset.models.metrics.ClassificationMetrics.false_negative" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="dataset.models.metrics.ClassificationMetrics.false_negative_rate">
+<code class="descname">false_negative_rate</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dataset/models/metrics/classify.html#ClassificationMetrics.false_negative_rate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dataset.models.metrics.ClassificationMetrics.false_negative_rate" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="dataset.models.metrics.ClassificationMetrics.false_omission_rate">
+<code class="descname">false_omission_rate</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dataset/models/metrics/classify.html#ClassificationMetrics.false_omission_rate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dataset.models.metrics.ClassificationMetrics.false_omission_rate" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="dataset.models.metrics.ClassificationMetrics.false_positive">
+<code class="descname">false_positive</code><span class="sig-paren">(</span><em>label=None</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dataset/models/metrics/classify.html#ClassificationMetrics.false_positive"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dataset.models.metrics.ClassificationMetrics.false_positive" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="dataset.models.metrics.ClassificationMetrics.false_positive_rate">
+<code class="descname">false_positive_rate</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dataset/models/metrics/classify.html#ClassificationMetrics.false_positive_rate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dataset.models.metrics.ClassificationMetrics.false_positive_rate" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="dataset.models.metrics.ClassificationMetrics.free">
+<code class="descname">free</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dataset/models/metrics/classify.html#ClassificationMetrics.free"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dataset.models.metrics.ClassificationMetrics.free" title="Permalink to this definition">¶</a></dt>
+<dd><p>Free memory allocated for intermediate data</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="dataset.models.metrics.ClassificationMetrics.iou">
+<code class="descname">iou</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dataset/models/metrics/classify.html#ClassificationMetrics.iou"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dataset.models.metrics.ClassificationMetrics.iou" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="dataset.models.metrics.ClassificationMetrics.jaccard">
+<code class="descname">jaccard</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dataset/models/metrics/classify.html#ClassificationMetrics.jaccard"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dataset.models.metrics.ClassificationMetrics.jaccard" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="dataset.models.metrics.ClassificationMetrics.miss_rate">
+<code class="descname">miss_rate</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dataset/models/metrics/classify.html#ClassificationMetrics.miss_rate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dataset.models.metrics.ClassificationMetrics.miss_rate" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="dataset.models.metrics.ClassificationMetrics.negative_likelihood_ratio">
+<code class="descname">negative_likelihood_ratio</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dataset/models/metrics/classify.html#ClassificationMetrics.negative_likelihood_ratio"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dataset.models.metrics.ClassificationMetrics.negative_likelihood_ratio" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="dataset.models.metrics.ClassificationMetrics.negative_predictive_value">
+<code class="descname">negative_predictive_value</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dataset/models/metrics/classify.html#ClassificationMetrics.negative_predictive_value"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dataset.models.metrics.ClassificationMetrics.negative_predictive_value" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="dataset.models.metrics.ClassificationMetrics.one_hot">
+<code class="descname">one_hot</code><span class="sig-paren">(</span><em>inputs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dataset/models/metrics/classify.html#ClassificationMetrics.one_hot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dataset.models.metrics.ClassificationMetrics.one_hot" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert an array of labels into a one-hot array</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="dataset.models.metrics.ClassificationMetrics.positive_likelihood_ratio">
+<code class="descname">positive_likelihood_ratio</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dataset/models/metrics/classify.html#ClassificationMetrics.positive_likelihood_ratio"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dataset.models.metrics.ClassificationMetrics.positive_likelihood_ratio" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="dataset.models.metrics.ClassificationMetrics.positive_predictive_value">
+<code class="descname">positive_predictive_value</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dataset/models/metrics/classify.html#ClassificationMetrics.positive_predictive_value"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dataset.models.metrics.ClassificationMetrics.positive_predictive_value" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="dataset.models.metrics.ClassificationMetrics.precision">
+<code class="descname">precision</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dataset/models/metrics/classify.html#ClassificationMetrics.precision"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dataset.models.metrics.ClassificationMetrics.precision" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="dataset.models.metrics.ClassificationMetrics.prediction_negative">
+<code class="descname">prediction_negative</code><span class="sig-paren">(</span><em>label=None</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dataset/models/metrics/classify.html#ClassificationMetrics.prediction_negative"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dataset.models.metrics.ClassificationMetrics.prediction_negative" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="dataset.models.metrics.ClassificationMetrics.prediction_positive">
+<code class="descname">prediction_positive</code><span class="sig-paren">(</span><em>label=None</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dataset/models/metrics/classify.html#ClassificationMetrics.prediction_positive"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dataset.models.metrics.ClassificationMetrics.prediction_positive" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="dataset.models.metrics.ClassificationMetrics.prevalence">
+<code class="descname">prevalence</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dataset/models/metrics/classify.html#ClassificationMetrics.prevalence"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dataset.models.metrics.ClassificationMetrics.prevalence" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="dataset.models.metrics.ClassificationMetrics.recall">
+<code class="descname">recall</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dataset/models/metrics/classify.html#ClassificationMetrics.recall"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dataset.models.metrics.ClassificationMetrics.recall" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="dataset.models.metrics.ClassificationMetrics.sensitivity">
+<code class="descname">sensitivity</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dataset/models/metrics/classify.html#ClassificationMetrics.sensitivity"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dataset.models.metrics.ClassificationMetrics.sensitivity" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="dataset.models.metrics.ClassificationMetrics.specificity">
+<code class="descname">specificity</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dataset/models/metrics/classify.html#ClassificationMetrics.specificity"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dataset.models.metrics.ClassificationMetrics.specificity" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="dataset.models.metrics.ClassificationMetrics.total_population">
+<code class="descname">total_population</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dataset/models/metrics/classify.html#ClassificationMetrics.total_population"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dataset.models.metrics.ClassificationMetrics.total_population" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="dataset.models.metrics.ClassificationMetrics.true_negative">
+<code class="descname">true_negative</code><span class="sig-paren">(</span><em>label=None</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dataset/models/metrics/classify.html#ClassificationMetrics.true_negative"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dataset.models.metrics.ClassificationMetrics.true_negative" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="dataset.models.metrics.ClassificationMetrics.true_negative_rate">
+<code class="descname">true_negative_rate</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dataset/models/metrics/classify.html#ClassificationMetrics.true_negative_rate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dataset.models.metrics.ClassificationMetrics.true_negative_rate" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="dataset.models.metrics.ClassificationMetrics.true_positive">
+<code class="descname">true_positive</code><span class="sig-paren">(</span><em>label=None</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dataset/models/metrics/classify.html#ClassificationMetrics.true_positive"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dataset.models.metrics.ClassificationMetrics.true_positive" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="dataset.models.metrics.ClassificationMetrics.true_positive_rate">
+<code class="descname">true_positive_rate</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dataset/models/metrics/classify.html#ClassificationMetrics.true_positive_rate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dataset.models.metrics.ClassificationMetrics.true_positive_rate" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="dataset.models.metrics.ClassificationMetrics.update">
+<code class="descname">update</code><span class="sig-paren">(</span><em>metrics</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dataset/models/metrics/classify.html#ClassificationMetrics.update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dataset.models.metrics.ClassificationMetrics.update" title="Permalink to this definition">¶</a></dt>
+<dd><p>Update confusion matrix with data from another metrics</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="segmentationmetricsbypixels">
+<h2>SegmentationMetricsByPixels<a class="headerlink" href="#segmentationmetricsbypixels" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="dataset.models.metrics.SegmentationMetricsByPixels">
+<em class="property">class </em><code class="descname">SegmentationMetricsByPixels</code><span class="sig-paren">(</span><em>targets</em>, <em>predictions</em>, <em>fmt='proba'</em>, <em>num_classes=None</em>, <em>axis=None</em>, <em>threshold=0.5</em>, <em>skip_bg=False</em>, <em>calc=True</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dataset/models/metrics/segment.html#SegmentationMetricsByPixels"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dataset.models.metrics.SegmentationMetricsByPixels" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">dataset.models.metrics.classify.ClassificationMetrics</span></code></p>
+<p>Metrics to assess segmentation models pixel-wise</p>
+<p class="rubric">Notes</p>
+<p>Rate metrics are evaluated for each item independently. So there are two levels of metrics aggregation:</p>
+<ul class="simple">
+<li>multi-class averaging</li>
+<li>dataset aggregation.</li>
+</ul>
+<p>For instance, if you have a dataset of 100 pictures (each having size of 256x256) of 10 classes and
+you need to calculate an accuracy of semantic segmentation, then:</p>
+<ul class="simple">
+<li><cite>evaluate([‘accuracy’], agg=None, multiclass=None)</cite> will return an array of shape (100, 10) containing accuracy
+of each class for each image separately.</li>
+<li><cite>evaluate([‘accuracy’], agg=’mean’, multiclass=None)</cite> will return a vector of shape (10,) containing
+an accuracy of each class averaged across all images.</li>
+<li><cite>evaluate([‘accuracy’], agg=None, multiclass=’macro’)</cite> will return a vector of shape (100,) containing
+an accuracy of each image separately averaged across all classes.</li>
+<li><cite>evaluate([‘accuracy’], agg=’mean’, multiclass=’macro’)</cite> will return a single value of
+an average accuracy of all classes and images combined.</li>
+</ul>
+<p>The default values are <cite>agg=’mean’, multiclass=’macro’</cite>.</p>
+<p>For multi-class averaging see <a class="reference internal" href="#dataset.models.metrics.ClassificationMetrics" title="dataset.models.metrics.ClassificationMetrics"><code class="xref py py-class docutils literal notranslate"><span class="pre">ClassificationMetrics</span></code></a>.</p>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">metrics</span> <span class="o">=</span> <span class="n">SegmentationMetricsByPixels</span><span class="p">(</span><span class="n">targets</span><span class="p">,</span> <span class="n">predictions</span><span class="p">,</span> <span class="n">num_classes</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="s1">&#39;labels&#39;</span><span class="p">)</span>
+<span class="n">metrics</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="s1">&#39;specificity&#39;</span><span class="p">)</span>
+<span class="n">metrics</span><span class="o">.</span><span class="n">evaluate</span><span class="p">([</span><span class="s1">&#39;sensitivity&#39;</span><span class="p">,</span> <span class="s1">&#39;jaccard&#39;</span><span class="p">],</span> <span class="n">agg</span><span class="o">=</span><span class="s1">&#39;mean&#39;</span><span class="p">,</span> <span class="n">multiclass</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</div>
+<div class="section" id="segmentationmetricsbyinstances">
+<h2>SegmentationMetricsByInstances<a class="headerlink" href="#segmentationmetricsbyinstances" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="dataset.models.metrics.SegmentationMetricsByInstances">
+<em class="property">class </em><code class="descname">SegmentationMetricsByInstances</code><span class="sig-paren">(</span><em>targets</em>, <em>predictions</em>, <em>fmt='proba'</em>, <em>num_classes=None</em>, <em>axis=None</em>, <em>skip_bg=True</em>, <em>threshold=0.5</em>, <em>iot=0.5</em>, <em>calc=True</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dataset/models/metrics/segment.html#SegmentationMetricsByInstances"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dataset.models.metrics.SegmentationMetricsByInstances" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">dataset.models.metrics.classify.ClassificationMetrics</span></code></p>
+<p>Metrics to assess segmentation models by instances (i.e. connected components of one class,
+e.g. cancer nodules, faces, )</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>iot</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.7)"><em>float</em></a>) – if the ratio of a predicted instance size to the corresponding target size &gt;= <cite>iot</cite>,
+then instance is considered correctly predicted (true postitive).</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<p>For other parameters see <a class="reference internal" href="#dataset.models.metrics.ClassificationMetrics" title="dataset.models.metrics.ClassificationMetrics"><code class="xref py py-class docutils literal notranslate"><span class="pre">ClassificationMetrics</span></code></a>.</p>
+<dl class="method">
+<dt id="dataset.models.metrics.SegmentationMetricsByInstances.condition_positive">
+<code class="descname">condition_positive</code><span class="sig-paren">(</span><em>label=None</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dataset/models/metrics/segment.html#SegmentationMetricsByInstances.condition_positive"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dataset.models.metrics.SegmentationMetricsByInstances.condition_positive" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="dataset.models.metrics.SegmentationMetricsByInstances.free">
+<code class="descname">free</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dataset/models/metrics/segment.html#SegmentationMetricsByInstances.free"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dataset.models.metrics.SegmentationMetricsByInstances.free" title="Permalink to this definition">¶</a></dt>
+<dd><p>Free memory allocated for intermediate data</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="dataset.models.metrics.SegmentationMetricsByInstances.prediction_positive">
+<code class="descname">prediction_positive</code><span class="sig-paren">(</span><em>label=None</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dataset/models/metrics/segment.html#SegmentationMetricsByInstances.prediction_positive"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dataset.models.metrics.SegmentationMetricsByInstances.prediction_positive" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="dataset.models.metrics.SegmentationMetricsByInstances.total_population">
+<code class="descname">total_population</code><span class="sig-paren">(</span><em>label=None</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dataset/models/metrics/segment.html#SegmentationMetricsByInstances.total_population"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dataset.models.metrics.SegmentationMetricsByInstances.total_population" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="dataset.models.metrics.SegmentationMetricsByInstances.true_negative">
+<code class="descname">true_negative</code><span class="sig-paren">(</span><em>label=None</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dataset/models/metrics/segment.html#SegmentationMetricsByInstances.true_negative"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dataset.models.metrics.SegmentationMetricsByInstances.true_negative" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="dataset.models.metrics.SegmentationMetricsByInstances.true_positive">
+<code class="descname">true_positive</code><span class="sig-paren">(</span><em>label=None</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dataset/models/metrics/segment.html#SegmentationMetricsByInstances.true_positive"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dataset.models.metrics.SegmentationMetricsByInstances.true_positive" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="dataset.research.html" title="dataset.research"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="dataset.models.html" title="dataset.models"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Dataset 0.3.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="dataset.html" >API</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="dataset.models.html" >dataset.models</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, Analysis Center.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.5.
+    </div>
+  </body>
+</html>
